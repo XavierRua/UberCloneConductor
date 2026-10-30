@@ -65,7 +65,7 @@ Resumen de la respuesta: Claude explicó que @expo/vector-icons usa fuentes tipo
 Qué se usó / modificó / descartó: se ejecuta el comando npx expo install expo-font
 Usado tal cual: comando npx expo install expo-font.
 Modificado / descartado: se agrega auntomticamente el archivo faltante
-Archivos y commit: package.json, package-lock.json — [hash]
+Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Verificación: confirmar: npx expo-doctor muestra 20/20 checks passed
 Aprendizaje: antes de contunuar con la realizacion del proyecto es importante ejecutar el comando npx expo-doctor ya que en ocaciones los archivos no se descargan todos.
 
@@ -81,7 +81,7 @@ Resumen de la respuesta: Claude propuso dos opciones: bajar la versión en el mi
 Qué se usó / modificó / descartó:
 Usado tal cual: [indicar la opción aplicada: 1 (bajar versión) o 2 (crear de nuevo)].
 Descartado: [la opción no utilizada].
-Archivos y commit: package.json, package-lock.json — [hash]
+Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Verificación: [confirmar: package.json con "expo": "~57.0.x" y app abierta en Expo Go]
 Aprendizaje: se instalo automaticamente la version 58 y en mi celular tengo la version 57, se realiza el cambio a la version 57.
 
@@ -96,7 +96,7 @@ Prompt: como proteger las llaves secretas. El access_token de Mercado Pago o la 
 Resumen de la respuesta: Claude explicó que las llaves secretas nunca deben estar en la app móvil, porque el APK se puede descompilar y las variables EXPO_PUBLIC_ quedan expuestas. La app solo usa la llave pública y un backend (por ejemplo, funciones serverless) guarda la secreta y crea los pagos. Recomendó .env en .gitignore, credenciales de prueba y revocar cualquier llave filtrada. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
 Qué se usó / modificó / descartó: Consulta conceptual; los fragmentos de código de ejemplo no se incorporaron al proyecto. El prompt no incluyó llaves reales.
 Archivos y commit: Ninguno (consulta conceptual).
-Verificación: [p. ej. contraste con la documentación oficial de Stripe y Mercado Pago sobre llaves públicas y privadas]
+Verificación: [p. ej. contraste con la documentación oficial de Stripe y Mercado Pago sobre Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Aprendizaje: se comprende la importacion de las llaves.
 
 --------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ Qué se usó / modificó / descartó:
 Usado tal cual: comandos de actualización y verificación.
 Modificado / descartado: [completar, o "Nada"].
 Archivos y commit: package.json, package-lock.json — [hash]
-Verificación: El proyecto quedó en SDK 58 y abre correctamente en Expo Go en el celular. [Agregar resultado de npx expo-doctor]
+Verificación: El proyecto quedó en SDK 58 y abre correctamente en Expo Go en el celular. Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Aprendizaje: se realiza el cambio de la version del expo 58
 
 --------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ explicame todo lo relacionado con el AsyncStorage
 
 Resumen de la respuesta: Claude explicó que AsyncStorage es un almacenamiento clave-valor persistente, asíncrono, solo de texto y sin cifrado. Mostró sus funciones (setItem, getItem, removeItem, mergeItem, multiGet, clear), el uso de JSON.stringify/JSON.parse, un servicio centralizado storage.js y un ejemplo del interruptor de disponibilidad. Indicó qué no guardar ahí (tokens → expo-secure-store, datos grandes → expo-sqlite). Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
 Qué se usó / modificó / descartó: Consulta conceptual; el código de ejemplo aún no se ha incorporado al proyecto. Si se usa el servicio storage.js, se registrará en una nueva entrada.
-Archivos y commit: Ninguno por ahora.
+Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Verificación: [p. ej. contraste con la documentación oficial de AsyncStorage]
 
 --------------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ Resumen de la respuesta: Claude generó la versión actualizada de docs/AI_LOG.m
 Qué se usó / modificó / descartó:
 Usado tal cual: estructura y contenido de las entradas.
 Modificado: fechas, hashes y campos de aprendizaje completados por el integrante.
-Archivos y commit: docs/AI_LOG.md — [hash]
+Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Verificación: Revisión de que cada prompt coincide con el historial de la conversación y de que el archivo se visualiza bien en GitHub.
 
 --------------------------------------------------------------------------------------------
@@ -164,4 +164,5 @@ Resumen de la respuesta: Claude identificó que el error principal es que `useEf
   Enlace a la conversación: [pegar enlace]
 Qué se usó / modificó / descartó:
 Usado tal cual: [completar: solo la corrección del import, o la versión corregida completa].
+Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Aprendizaje: se debe realizar siempre la importacion de useEFfect
