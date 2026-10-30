@@ -181,7 +181,7 @@ Resumen de la respuesta: Claude explicó cómo crear el proyecto en la consola, 
 Qué se usó / modificó / descartó:
 Usado tal cual:[completar: pasos de la consola, código de configuración
 Modificado: el archivo se nombró `firebaseConfig.js` en lugar de `firebase.js`. [agregar otros cambios]
-Archivos y commit: `src/services/firebaseConfig.js`, `package.json`, `package-lock.json` — [hash]
+Archivos y commit: `src/services/firebaseConfig.js`, `package.json`, `package-lock.json` — [d8ed866a65f64a3e398ac1a268abac52da00b94e]
 Verificación:[p. ej. la app abre en Expo Go sin errores de Firebase; proyecto visible en la consola con Authentication y Firestore activos]
 Aprendizaje: creacion de proyecto en Firestore.
 
@@ -197,7 +197,7 @@ Prompt: que es .env y .env.example
 Resumen de la respuesta: Claude explicó que `.env` guarda los valores reales de las variables de entorno y no se sube a GitHub (va en `.gitignore`), mientras que `.env.example` es la plantilla con los mismos nombres sin valores y sí se sube. Indicó que Expo solo expone las variables con prefijo `EXPO_PUBLIC_`, que se debe reiniciar con `npx expo start -c` y cómo sacar un `.env` subido por error con `git rm --cached`.
 Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
 Qué se usó / modificó / descartó:[completar: p. ej. se crearon `.env` y `.env.example` y se agregó `.env` al `.gitignore`]
-Archivos y commit: `.env.example`, `.gitignore` — [hash] (el `.env` no se sube al repositorio)
+Archivos y commit: `.env.example`, `.gitignore` — [d8ed866a65f64a3e398ac1a268abac52da00b94e] (el `.env` no se sube al repositorio)
 Aprendizaje: subir las llaves de fireBase podria ocacionar que una persona acceda a mi base de datos.
 
 --------------------------------------------------------------------------------------------
@@ -213,10 +213,42 @@ Prompt:para que sirve `firebaseConfig.js`.
 Resumen de la respuesta: Claude explicó que `firebaseConfig.js` reúne la configuración del proyecto, inicializa Firebase una sola vez y exporta los servicios (`auth`, `db`) para que las pantallas y servicios los importen. Señaló que centralizarlo evita el error de inicialización duplicada y separa la configuración de la interfaz.
   Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
 Qué se usó / modificó / descartó: Consulta conceptual; los ejemplos de `LoginScreen` y `tripService` no se incorporaron al proyecto.
-Archivos y commit: Ninguno (consulta conceptual).
+Archivos y commit: Ninguno [d8ed866a65f64a3e398ac1a268abac52da00b94e].
 Verificación:[p. ej. contraste con la documentación oficial de Firebase para la Web]
 Aprendizaje: Este archivo es el puente entre tu app y la base de datos en Firebase
 
 --------------------------------------------------------------------------------------------
 
 
+Entrada #14
+Fecha: 2026-10-29,
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Conectar la app de Expo a la base de datos Firestore.
+Prompt:como puedo conectar expo a la base de datos
+
+Resumen de la respuesta: Claude indicó verificar que Firestore esté creado y revisar sus reglas de seguridad, confirmar que firebaseConfig.js exporte db y crear un servicio driverService.js con funciones para crear, leer, actualizar y escuchar en tiempo real el perfil del conductor. Incluyó una prueba de conexión, una tabla de funciones de Firestore y los errores comunes (permission-denied, .env no cargado, conexión que no responde). Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. la idea de la prueba de conexión].
+Modificado: la prueba se escribió con setDoc y un id fijo (ping) en lugar de addDoc (ver entrada #16).
+Descartado: [completar: p. ej. driverService.js aún no se incorpora].
+Archivos y commit: [d8ed866a65f64a3e398ac1a268abac52da00b94e]
+Verificación: [p. ej. documento ping visible en la colección connectionTest de la consola]
+Aprendizaje: se realiza la configuracion y creacion de la bd.
+
+--------------------------------------------------------------------------------------------
+
+Entrada #15
+Fecha: 2026-10-29,
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Revisar el código de prueba de conexión con Firestore en App.js.
+Prompt:revisa este codigo :
+
+Resumen de la respuesta: Claude confirmó que el código es correcto y que usar setDoc con un id fijo evita acumular documentos. Señaló que, sin conexión, Firestore deja la escritura pendiente y el mensaje se queda en "Probando..." indefinidamente, por lo que propuso un límite de 10 segundos con Promise.race y mostrar error.code. Incluyó una tabla para interpretar cada mensaje. Enlace a la conversación: [pegar enlace]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: versión con límite de tiempo, o se conservó el código original].
+Modificado : se modificó el archivo original a la App.js con un nuevo condigo para podrer revisar la conexion entre la app y la bd
+Archivos y commit: App.js — [d8ed866a65f64a3e398ac1a268abac52da00b94e]
+Verificación: [p. ej. la app muestra "Conexión exitosa con Firestore" en Expo Go y el documento ping aparece en la consola]
+Aprendizaje: se logra conectar el celular a la base de datos con ayuda de la Ai 
