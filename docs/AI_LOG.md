@@ -252,3 +252,49 @@ Modificado : se modificó el archivo original a la App.js con un nuevo condigo p
 Archivos y commit: App.js — [d8ed866a65f64a3e398ac1a268abac52da00b94e]
 Verificación: [p. ej. la app muestra "Conexión exitosa con Firestore" en Expo Go y el documento ping aparece en la consola]
 Aprendizaje: se logra conectar el celular a la base de datos con ayuda de la Ai 
+
+--------------------------------------------------------------------------------------------
+
+
+Entrada #16
+Fecha: 30 -10-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Construir las opciones de las listas desplegables del formulario de registro del conductor y un componente para mostrarlas.
+Prompt: como puedo construir un aOpciones de las listas desplegables de registro en js
+
+Resumen de la respuesta: Claude explicó que React Native no tiene un <select> y propuso un archivo de constantes con arreglos de opciones { label, value } (tipo de documento, tipo de vehículo, marcas por tipo, colores, ciudades y años generados con una función), más un componente propio SelectField con Modal y FlatList, sin instalar dependencias. Mostró su uso en la pantalla de registro, incluida una lista dependiente (marca según tipo de vehículo) y la función getOptionLabel. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145S]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. estructura { label, value }, componente SelectField].
+Modificado: las listas se adaptaron al enunciado (categorías de vehículo, género, colores e idioma). [completar otros cambios]
+Descartado: tipo de documento, marcas, ciudades y años del modelo; la librería @react-native-picker/picker. [ajustar según lo que realmente se usó]
+Archivos y commit: [ruta]/[archivo de opciones].js, src/components/SelectField.js — [hash]
+Verificación: [p. ej. las listas se abren, muestran las opciones y guardan el valor elegido en Expo Go]
+
+
+--------------------------------------------------------------------------------------------
+Entrada #17
+Fecha: 30 -10-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Revisar el archivo de opciones de las listas desplegables construido para el registro.
+Prompt: lo construi de la sigueinte forma :
+
+
+// Capacidad mínima de pasajeros para la categoría XL (enunciado, pestaña Vehículo)
+export const MIN_XL_CAPACITY = 6;
+
+// Años de antigüedad desde los que se exige la revisión técnico-mecánica (vehículo particular en Colombia)
+export const TECHNICAL_REVIEW_FREE_YEARS = 5;
+
+// Solo los valores, para validar que lo elegido exista en la lista
+export const getValues = (options) => options.map((option) => option.value);
+Resumen de la respuesta: Claude confirmó que la estructura { value, label } es correcta y compatible con SelectField, y destacó las constantes con comentario de origen. Sugirió calcular la revisión técnico-mecánica con la fecha de matrícula, mostrar un campo de texto cuando el color sea "Otro", agregar la función getOptionLabel y un ejemplo de validación con getValues. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145S]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. función getOptionLabel, campo de texto para color "Otro"].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [ruta]/[archivo de opciones].js — [hash]
+Verificación: [p. ej. la validación rechaza valores que no están en la lista; el campo de color personalizado aparece solo al elegir "Otro"]
+Aprendizaje: [completar con tus palabras]
+
+  
