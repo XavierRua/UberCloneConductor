@@ -166,3 +166,57 @@ Qué se usó / modificó / descartó:
 Usado tal cual: [completar: solo la corrección del import, o la versión corregida completa].
 Archivos y commit: `docs/AI_LOG.md` — [854d5b1d4ef459a9aa475909674a6c53083c262a]
 Aprendizaje: se debe realizar siempre la importacion de useEFfect
+
+
+--------------------------------------------------------------------------------------------
+
+Entrada #11
+
+Fecha: 2026-10-29
+Integrante:Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Crear el proyecto en la consola de Firebase y conectarlo a la app de Expo.
+Prompt: como crear un proyecto en la consola de Firebase.
+Resumen de la respuesta: Claude explicó cómo crear el proyecto en la consola, registrar la app como **Web** (porque Expo Go usa el SDK de JavaScript y no `@react-native-firebase`) y activar Authentication (correo/contraseña) y Firestore. Advirtió que Storage requiere el plan Blaze. Entregó el archivo de configuración con persistencia de sesión mediante AsyncStorage y variables `EXPO_PUBLIC_` en `.env`. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual:[completar: pasos de la consola, código de configuración
+Modificado: el archivo se nombró `firebaseConfig.js` en lugar de `firebase.js`. [agregar otros cambios]
+Archivos y commit: `src/services/firebaseConfig.js`, `package.json`, `package-lock.json` — [hash]
+Verificación:[p. ej. la app abre en Expo Go sin errores de Firebase; proyecto visible en la consola con Authentication y Firestore activos]
+Aprendizaje: creacion de proyecto en Firestore.
+
+--------------------------------------------------------------------------------------------
+
+Entrada #12
+
+Fecha:** 2026-10-29,
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender para qué sirven los archivos `.env` y `.env.example`.
+Prompt: que es .env y .env.example
+Resumen de la respuesta: Claude explicó que `.env` guarda los valores reales de las variables de entorno y no se sube a GitHub (va en `.gitignore`), mientras que `.env.example` es la plantilla con los mismos nombres sin valores y sí se sube. Indicó que Expo solo expone las variables con prefijo `EXPO_PUBLIC_`, que se debe reiniciar con `npx expo start -c` y cómo sacar un `.env` subido por error con `git rm --cached`.
+Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:[completar: p. ej. se crearon `.env` y `.env.example` y se agregó `.env` al `.gitignore`]
+Archivos y commit: `.env.example`, `.gitignore` — [hash] (el `.env` no se sube al repositorio)
+Aprendizaje: subir las llaves de fireBase podria ocacionar que una persona acceda a mi base de datos.
+
+--------------------------------------------------------------------------------------------
+
+Entrada #13
+
+Fecha:** 2026-10-29, 
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender la función del archivo `firebaseConfig.js` dentro de la app.
+Prompt:para que sirve `firebaseConfig.js`.
+
+Resumen de la respuesta: Claude explicó que `firebaseConfig.js` reúne la configuración del proyecto, inicializa Firebase una sola vez y exporta los servicios (`auth`, `db`) para que las pantallas y servicios los importen. Señaló que centralizarlo evita el error de inicialización duplicada y separa la configuración de la interfaz.
+  Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó: Consulta conceptual; los ejemplos de `LoginScreen` y `tripService` no se incorporaron al proyecto.
+Archivos y commit: Ninguno (consulta conceptual).
+Verificación:[p. ej. contraste con la documentación oficial de Firebase para la Web]
+Aprendizaje: Este archivo es el puente entre tu app y la base de datos en Firebase
+
+--------------------------------------------------------------------------------------------
+
+
