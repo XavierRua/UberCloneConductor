@@ -452,4 +452,78 @@ Usado tal cual: [completar: p. ej. componente ImageField completo].
 Modificado / descartado: [completar, o "Nada"].
 Archivos y commit: [278153b]
 Verificación: [p. ej. en Expo Go se tomó una foto con la cámara y otra desde la galería, se vio la vista previa, se quitó la foto y apareció el error al intentar avanzar sin foto]
+
+--------------------------------------------------------------------------------------------
+
+Entrada #29
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir el archivo de constantes de tarifas (PRICING) y comisión de la plataforma.
+Prompt: corrige este codigo
+export const COMMISSION_PERCENT = Math.round(COMMISSION_RATE * 100);
+Resumen de la respuesta: Claude identificó que perminute no sigue el camelCase del resto de propiedades (perKm, baseFare), por lo que leer PRICING.perMinute devuelve undefined y el cálculo de la tarifa da NaN; lo corrigió a perMinute. Agregó comentarios con las unidades (COP), Object.freeze para evitar modificaciones accidentales y confirmó que las claves de categoryMultipliers coinciden con los valores de VEHICLE_CATEGORIES. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. corrección de perMinute, comentarios de unidades].
+Modificado / descartado: [completar: p. ej. Object.freeze].
+Archivos y commit: [f7153e8]
+Verificación: [p. ej. PRICING.perMinute devuelve 250 y el cálculo de una tarifa de prueba no da NaN]
+Aprendizaje: se siguen las intrucciones del taller
+
+--------------------------------------------------------------------------------------------
+Entrada #30
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Definir el objeto de estilos que necesita el componente CheckboxField.
+Prompt: como quedaria el objeto segun la funcion
+Resumen de la respuesta: Claude entregó el objeto styles con las tres claves que usa el componente (container, row y label), siguiendo el mismo patrón de SelectField e ImageField. Explicó que flex: 1 en el texto permite que una etiqueta larga, como la de los términos, salte de línea sin salirse de la pantalla, y advirtió que colors.primary y typography.body deben existir en ../theme. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. objeto styles completo].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [f7153e8]
+Verificación: [p. ej. en Expo Go la casilla se marca y desmarca al tocarla, el texto largo se ajusta en varias líneas y el error aparece al no aceptar los términos]
+Aprendizaje: [completar con tus palabras]
+
+--------------------------------------------------------------------------------------------
+Entrada #31
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Encontrar y corregir los errores del objeto de estilos de una pantalla.
+Prompt: busca los errores y corrigelo
+Resumen de la respuesta: Claude encontró tres errores de escritura: borderradius en lugar de borderRadius, marginBotom en lugar de marginBottom y 'rov' en lugar de 'row' en flexDirection. Explicó que las dos primeras propiedades se ignoran sin aviso y que el valor 'rov' genera un error de estilo inválido. Recordó verificar que ../theme exporte spacing.xxl, spacing.md, radius.md, colors.accent y colors.success. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: corrección de las tres propiedades.
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [f7153e8]
+Verificación: [p. ej. la pantalla abre en Expo Go, el resumen tiene bordes redondeados, separación inferior y las filas se muestran en horizontal]
+
+  ------------------------------------------------------------------------------------------
+
+  Entrada 32
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Encontrar el error del bloque que muestra el resumen del estado de cada pestaña del registro.
+Prompt:
+javascript
+<View style={styles.summary}>
+        {Object.entries(TAB_NAMES).map(([key, name]) => (
+          <View key={key} style={styles.summaryRow}>
+            <Ionicons
+              name={tabsValid[key] ? 'checkmark-circle' : 'ellipse-outline'}
+              size={18}
+              color={tabsValid[key] ? colors.success : colors.textSecondary}
+            />
+            <Text style={typography.body}>{name}</Text>
+          
+        ))}
+      </View>
+Resumen de la respuesta: Claude identificó que falta cerrar el <View> de cada fila (</View>) antes de ))}, lo que produce un error de sintaxis JSX. Entregó el bloque corregido y recordó que las claves de TAB_NAMES deben coincidir con las de tabsValid y que colors.textSecondary debe existir en ../theme. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: cierre del <View> de cada fila.
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [f7153e8]
+Verificación: [p. ej. la pantalla compila en Expo Go y muestra cada pestaña con su ícono de completa o pendiente]
 Aprendizaje: [completar con tus palabras]

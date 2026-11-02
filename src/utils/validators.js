@@ -1,6 +1,4 @@
 // AI-assisted: see docs/AI_LOG.md #18
-// Validaciones del registro del conductor (sección 2 del enunciado).
-// Cada función devuelve '' si el valor es válido, o el mensaje de error que se muestra debajo del campo.
 import {
   VEHICLE_CATEGORIES,
   GENDERS,
@@ -25,6 +23,13 @@ const startOfToday = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
+};
+
+// Fecha de mañana a las 00:00: el vencimiento debe ser posterior a hoy
+const startOfTomorrow = () => {
+  const tomorrow = startOfToday();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
 };
 
 // ---------- Validaciones por campo ----------
@@ -116,10 +121,10 @@ export const validateCapacity = (value, category) => {
   return '';
 };
 
-// Fecha de vencimiento: debe ser posterior a hoy
+// Fecha de vencimiento: debe ser posterior a hoy (si vence hoy, ya no es válida)
 export const validateFutureDate = (date) => {
   if (!(date instanceof Date)) return 'Selecciona la fecha de vencimiento';
-  if (date <= startOfToday()) return 'El documento está vencido';
+  if (date < startOfTomorrow()) return 'Debe ser posterior a hoy';
   return '';
 };
 
@@ -183,3 +188,8 @@ export const validateDocuments = (data, vehicleYear) => {
     termsAccepted: data.termsAccepted === true ? '' : 'Debes aceptar los términos',
   });
 };
+
+
+// Validaciones del registro del conductor .
+// Cada función devuelve '' si el valor es válido, o el mensaje de error que se muestra debajo del campo.
+// se rescribe una funcion validateFutureDate para que la fecha de vencimiento sea posterior a hoy (si vence hoy, ya no es válida)
