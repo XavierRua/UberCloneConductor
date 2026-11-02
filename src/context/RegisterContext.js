@@ -1,5 +1,3 @@
-
-
 import { createContext, useCallback, useMemo, useState } from 'react';
 import { validatePersonalData, validateVehicle, validateDocuments,hasNoErrors, } from '../utils/validators';
 
