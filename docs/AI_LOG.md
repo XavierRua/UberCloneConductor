@@ -661,3 +661,31 @@ Modificado / descartado: [completar, o "Nada"].
 Archivos y commit:[cffbf28]
 Verificación: [p. ej. al enviar el registro en Expo Go ya no aparece el error y el documento del conductor se crea en Firestore]
 Aprendizaje: se debe utilizar import { doc, getDoc, setDoc } para utilizar la funcion.
+
+--------------------------------------------------------------------------------------------
+
+Entrada #38
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Revisar la función deleteDriver, que elimina el documento del conductor en Firestore.
+Prompt:
+
+revisa este codigo:
+
+javascript
+export const deleteDriver = async (phone) => {
+  await deleteDoc(doc(db, COLLECTION, phone));
+
+  // Verificación: el documento ya no debe existir
+  if (await phoneExists(phone)) {
+    throw new Error('El conductor no se eliminó por completo. Intenta de nuevo.');
+  }
+};
+Resumen de la respuesta: Claude confirmó que la lógica es correcta y señaló que deleteDoc debe estar importado desde firebase/firestore . Agregó la normalización del celular y una validación para no llamar doc() con un id vacío. Indicó pedir confirmación con Alert antes de eliminar, cerrar la sesión local después y que, cuando se active Storage, también habrá que borrar las fotos del conductor. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. import de deleteDoc, validación del celular].
+Modificado / descartado: [completar: p. ej. confirmación con Alert, verificación posterior].
+Archivos y commit:  [c0921c1]
+Verificación: [p. ej. al tocar Eliminar usuario y confirmar, el documento desaparece de Firestore y la app vuelve a la pantalla de registro]
+Aprendizaje: [completar con tus palabras]

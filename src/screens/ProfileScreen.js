@@ -1,10 +1,10 @@
 // AI-assisted: see docs/AI_LOG.md #36
 
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import useSession from '../hooks/useSession';
-import { getDriver } from '../services/driverService';
+import { deleteDriver, getDriver } from '../services/driverService';
 import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -20,9 +20,10 @@ export default function ProfileScreen() {
   const { driverPhone, endSession } = useSession();
   const [driver, setDriver] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
- 
+  
   useEffect(() => {
     let active = true;
 
@@ -41,6 +42,31 @@ export default function ProfileScreen() {
       active = false;
     };
   }, [driverPhone]);
+
+  
+  const removeDriver = useCallback(async () => {
+    setErrorMessage('');
+    setDeleting(true);
+    try {
+      await deleteDriver(driverPhone);
+      await endSession(); 
+    } catch (error) {
+      setErrorMessage(`No se pudo eliminar el usuario: ${error.message}`);
+      setDeleting(false);
+    }
+  }, [driverPhone, endSession]);
+
+  
+  const confirmDelete = useCallback(() => {
+    Alert.alert(
+      'Eliminar usuario',
+      `Se borrarán todos los datos del conductor con celular ${driverPhone}. Esta acción no se puede deshacer.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: removeDriver },
+      ]
+    );
+  }, [driverPhone, removeDriver]);
 
   if (loading) {
     return (
@@ -81,7 +107,15 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <PrimaryButton label="Cerrar sesión" onPress={endSession} />
+      <PrimaryButton label="Cerrar sesión" onPress={endSession} variant="secondary" disabled={deleting} />
+
+      {/* Borra al conductor de la base de datos (requisito de la primera entrega) */}
+      <PrimaryButton
+        label={deleting ? 'Eliminando...' : 'Eliminar usuario'}
+        onPress={confirmDelete}
+        variant="danger"
+        disabled={deleting}
+      />
     </ScrollView>
   );
 }
@@ -108,4 +142,6 @@ const styles = StyleSheet.create({
   badgeText: { fontWeight: '700', color: colors.text },
 });
 
+// modificaciones al archivo: 
 // Perfil del conductor: lee sus datos desde Firestore. En el avance 12 se agrega Eliminar usuario.
+// Eliminar usuario
