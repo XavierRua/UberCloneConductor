@@ -268,8 +268,7 @@ Qué se usó / modificó / descartó:
 Usado tal cual: [completar: p. ej. estructura { label, value }, componente SelectField].
 Modificado: las listas se adaptaron al enunciado (categorías de vehículo, género, colores e idioma). [completar otros cambios]
 Descartado: tipo de documento, marcas, ciudades y años del modelo; la librería @react-native-picker/picker. [ajustar según lo que realmente se usó]
-Archivos y commit: [ruta]/[archivo de opciones].js, src/components/SelectField.js — [hash]
-Verificación: [p. ej. las listas se abren, muestran las opciones y guardan el valor elegido en Expo Go]
+Archivos y commit: f32b1b2402f29787a69031b37e62f868fb26e0ca
 
 
 --------------------------------------------------------------------------------------------
@@ -293,8 +292,24 @@ Resumen de la respuesta: Claude confirmó que la estructura { value, label } es 
 Qué se usó / modificó / descartó:
 Usado tal cual: [completar: p. ej. función getOptionLabel, campo de texto para color "Otro"].
 Modificado / descartado: [completar, o "Nada"].
-Archivos y commit: [ruta]/[archivo de opciones].js — [hash]
-Verificación: [p. ej. la validación rechaza valores que no están en la lista; el campo de color personalizado aparece solo al elegir "Otro"]
-Aprendizaje: [completar con tus palabras]
+Archivos y commit: f32b1b2402f29787a69031b37e62f868fb26e0ca
 
-  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Entrada #18
+Fecha: 1-NOV-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Ajustar las validaciones por campo del registro del conductor a las reglas exactas del enunciado.
+Prompt: como realizarValidaciones por campo: nombre completo (máximo 50, solo letras con tildes/ñ y espacios), documento (numérico, 6 a 10 dígitos), celular (numérico, 10 dígitos), fecha de nacimiento (mayor de 18 años), correo (con @ y dominio), placa colombiana ABC123 (convertir a mayúsculas antes de validar), marca y modelo (máximo 30), año (4 dígitos, no mayor al actual), capacidad (numérica; XL mínimo 6), fechas de vencimiento posteriores a hoy, número de licencia numérico, y revisión técnico-mecánica obligatoria solo si el vehículo tiene 5 años o más
+
+Resumen de la respuesta: Claude comparó cada regla del enunciado con el archivo de validaciones existente y confirmó que todas estaban cubiertas. Entregó la versión final con tres ajustes: la función toText para evitar el error value.trim is not a function, la fecha de vencimiento que rechaza el mismo día de hoy ("posterior a hoy") y la validación de fechas inválidas. Retiró la sugerencia previa de aceptar el año siguiente, porque el enunciado exige "no mayor al actual". Enlace a la conversación: [(https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145)]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. archivo completo validacionesRegistro.js].
+Modificado: [completar, o "Nada"].
+Descartado: la sugerencia de la entrada #22 de aceptar el año siguiente en validateYear.
+Archivos y commit: src/utils/validacionesRegistro.js — [3ae1b5fa0c3faa3053d830a955ead2596e3111be]
+Verificación: Las funciones se ejecutaron con casos límite de cada regla: nombre de 51 caracteres, documento de 5 dígitos, celular de 9 dígitos, 17 y 18 años de edad, correo sin dominio, placa abc123 (válida) y AB1234 (rechazada), año actual + 1, capacidad 5 y 6 en XL, vencimiento hoy (rechazado) y mañana (válido), licencia con letras, y vehículo de 4 y 5 años. Todas dieron el resultado esperado. [Agregar la prueba en Expo Go]
+Aprendizaje: Este archivo fue consultado en internet y con la ayuda de la ia se genero.
+
+--------------------------------------------------------------------------------------------
