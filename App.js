@@ -1,36 +1,29 @@
-// AI-assisted: see docs/AI_LOG.md #15
-// Prueba TEMPORAL de conexión con Firestore. Se reemplaza en el siguiente avance.
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from './src/config/firebaseConfig';
+import { RegisterProvider } from './src/context/RegisterContext';
+import RegisterTabs from './src/navigation/RegisterTabs';
 
 export default function App() {
-  const [message, setMessage] = useState('Probando conexión con Firebase...');
-
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        await setDoc(doc(db, 'connectionTest', 'ping'), { createdAt: Date.now() });
-        setMessage('Conexión exitosa con Firestore');
-      } catch (error) {
-        setMessage(`Error al conectar: ${error.message}`);
-      }
-    };
-    testConnection();
-  }, []);
-
   return (
-    <View style={styles.container}>
-      {/* Mensaje con el resultado de la prueba */}
-      <Text style={styles.text}>{message}</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      {/* El contexto envuelve la navegación para que las tres pestañas compartan los datos */}
+      <RegisterProvider>
+        <NavigationContainer>
+          <RegisterTabs />
+        </NavigationContainer>
+      </RegisterProvider>
+      <StatusBar style="dark" />
+    </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  text: { fontSize: 16, textAlign: 'center' },
-});
+// Este archivo es el punto de entrada de la app. Contiene la navegación y el contexto del 
+// registro.
+
+// cambios ejecutados en este archivo:
+
+// Plantilla original de Expo
+// prueba de conexion a firebase
+// prueba de validaciones
+// version definitiva con navegacion (las tres pestañas del registro) y contexto (para compartir los datos entre las tres pestañas)
