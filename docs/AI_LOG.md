@@ -313,3 +313,37 @@ Verificación: Las funciones se ejecutaron con casos límite de cada regla: nomb
 Aprendizaje: Este archivo fue consultado en internet y con la ayuda de la ia se genero.
 
 --------------------------------------------------------------------------------------------
+Entrada #19
+Fecha: [01-11-2026],
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Revisar el estado inicial de los datos personales del formulario de registro del conductor.
+Prompt:revisa este formulario
+
+const initialPersonalData = { profilePhoto: '', fullName: '', // ... birthDate: null, language: 'es', };
+
+Resumen de la respuesta: Claude confirmó que los valores iniciales son correctos (textos vacíos, birthDate en null y language con valor por defecto válido) y advirtió que el // ... en una sola línea comenta el resto del objeto y lo deja sin cerrar. Recomendó escribir el objeto en varias líneas, usar las mismas claves que validatePersonalData y propuso los estados iniciales de las pestañas Vehículo y Documentos. Pidió el formulario completo para revisarlo. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. objetos initialPersonalData, initialVehicleData, initialDocumentsData].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: src/screens/[pantalla de registro].js — [564840404a16e295323cbf7b480c85301ad3037d]
+Verificación: [p. ej. el formulario abre sin errores y al presionar "Siguiente" con campos vacíos muestra los mensajes de cada campo]
+Aprendizaje: se replica este misma estructura en initialVehicle, initialDocuments
+
+--------------------------------------------------------------------------------------------
+
+Entrada #22
+Fecha: 01-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Encontrar la causa del error en el archivo de validaciones del registro.
+Prompt: revisa este codigo que me sale un error :
+
+Se adjuntó como documento el archivo de validaciones completo
+Resumen de la respuesta: Como no se incluyó el mensaje del error, Claude revisó el código y señaló dos causas probables: TypeError: value.trim is not a function cuando un campo llega como número (propuso la función auxiliar toText) y una ruta incorrecta del import ../constants/opcionesRegistro. Indicó además que las fechas deben ser objetos Date, que validateYear no acepta el año siguiente y renombrar la variable document. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. función toText en lugar de value.trim()].
+Modificado / descartado: [completar: p. ej. aceptar el año siguiente en validateYear, renombrar document].
+Archivos y commit: src/utils/[archivo de validaciones].js — [564840404a16e295323cbf7b480c85301ad3037d]
+Verificación: [completar: mensaje de error original y confirmación de que desapareció en Expo Go]
+Aprendizaje: [completar con tus palabras]
