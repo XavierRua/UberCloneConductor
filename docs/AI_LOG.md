@@ -252,3 +252,64 @@ Modificado : se modificó el archivo original a la App.js con un nuevo condigo p
 Archivos y commit: App.js — [d8ed866a65f64a3e398ac1a268abac52da00b94e]
 Verificación: [p. ej. la app muestra "Conexión exitosa con Firestore" en Expo Go y el documento ping aparece en la consola]
 Aprendizaje: se logra conectar el celular a la base de datos con ayuda de la Ai 
+
+--------------------------------------------------------------------------------------------
+
+
+Entrada #16
+Fecha: 30 -10-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Construir las opciones de las listas desplegables del formulario de registro del conductor y un componente para mostrarlas.
+Prompt: como puedo construir un aOpciones de las listas desplegables de registro en js
+
+Resumen de la respuesta: Claude explicó que React Native no tiene un <select> y propuso un archivo de constantes con arreglos de opciones { label, value } (tipo de documento, tipo de vehículo, marcas por tipo, colores, ciudades y años generados con una función), más un componente propio SelectField con Modal y FlatList, sin instalar dependencias. Mostró su uso en la pantalla de registro, incluida una lista dependiente (marca según tipo de vehículo) y la función getOptionLabel. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145S]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. estructura { label, value }, componente SelectField].
+Modificado: las listas se adaptaron al enunciado (categorías de vehículo, género, colores e idioma). [completar otros cambios]
+Descartado: tipo de documento, marcas, ciudades y años del modelo; la librería @react-native-picker/picker. [ajustar según lo que realmente se usó]
+Archivos y commit: f32b1b2402f29787a69031b37e62f868fb26e0ca
+
+
+--------------------------------------------------------------------------------------------
+Entrada #17
+Fecha: 30 -10-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Revisar el archivo de opciones de las listas desplegables construido para el registro.
+Prompt: lo construi de la sigueinte forma :
+
+
+// Capacidad mínima de pasajeros para la categoría XL (enunciado, pestaña Vehículo)
+export const MIN_XL_CAPACITY = 6;
+
+// Años de antigüedad desde los que se exige la revisión técnico-mecánica (vehículo particular en Colombia)
+export const TECHNICAL_REVIEW_FREE_YEARS = 5;
+
+// Solo los valores, para validar que lo elegido exista en la lista
+export const getValues = (options) => options.map((option) => option.value);
+Resumen de la respuesta: Claude confirmó que la estructura { value, label } es correcta y compatible con SelectField, y destacó las constantes con comentario de origen. Sugirió calcular la revisión técnico-mecánica con la fecha de matrícula, mostrar un campo de texto cuando el color sea "Otro", agregar la función getOptionLabel y un ejemplo de validación con getValues. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145S]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. función getOptionLabel, campo de texto para color "Otro"].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: f32b1b2402f29787a69031b37e62f868fb26e0ca
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Entrada #18
+Fecha: 1-NOV-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Ajustar las validaciones por campo del registro del conductor a las reglas exactas del enunciado.
+Prompt: como realizarValidaciones por campo: nombre completo (máximo 50, solo letras con tildes/ñ y espacios), documento (numérico, 6 a 10 dígitos), celular (numérico, 10 dígitos), fecha de nacimiento (mayor de 18 años), correo (con @ y dominio), placa colombiana ABC123 (convertir a mayúsculas antes de validar), marca y modelo (máximo 30), año (4 dígitos, no mayor al actual), capacidad (numérica; XL mínimo 6), fechas de vencimiento posteriores a hoy, número de licencia numérico, y revisión técnico-mecánica obligatoria solo si el vehículo tiene 5 años o más
+
+Resumen de la respuesta: Claude comparó cada regla del enunciado con el archivo de validaciones existente y confirmó que todas estaban cubiertas. Entregó la versión final con tres ajustes: la función toText para evitar el error value.trim is not a function, la fecha de vencimiento que rechaza el mismo día de hoy ("posterior a hoy") y la validación de fechas inválidas. Retiró la sugerencia previa de aceptar el año siguiente, porque el enunciado exige "no mayor al actual". Enlace a la conversación: [(https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145)]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. archivo completo validacionesRegistro.js].
+Modificado: [completar, o "Nada"].
+Descartado: la sugerencia de la entrada #22 de aceptar el año siguiente en validateYear.
+Archivos y commit: src/utils/validacionesRegistro.js — [3ae1b5fa0c3faa3053d830a955ead2596e3111be]
+Verificación: Las funciones se ejecutaron con casos límite de cada regla: nombre de 51 caracteres, documento de 5 dígitos, celular de 9 dígitos, 17 y 18 años de edad, correo sin dominio, placa abc123 (válida) y AB1234 (rechazada), año actual + 1, capacidad 5 y 6 en XL, vencimiento hoy (rechazado) y mañana (válido), licencia con letras, y vehículo de 4 y 5 años. Todas dieron el resultado esperado. [Agregar la prueba en Expo Go]
+Aprendizaje: Este archivo fue consultado en internet y con la ayuda de la ia se genero.
+
+--------------------------------------------------------------------------------------------
