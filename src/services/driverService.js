@@ -1,6 +1,6 @@
 // AI-assisted: see docs/AI_LOG.md #32
 
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { normalizePlate, requiresTechnicalReview } from '../utils/validators';
 import { COMMISSION_RATE } from '../config/pricing';
@@ -35,9 +35,9 @@ const buildDriverDocument = (personalData, vehicle, documents) => {
       technicalReviewExpiry: needsReview ? documents.technicalReviewExpiry : null,
       mercadoPagoEmail: documents.mercadoPagoEmail.trim().toLowerCase(),
       termsAccepted: true,
-      commissionRate: COMMISSION_RATE, 
+      commissionRate: COMMISSION_RATE, // comisión aceptada al registrarse
     },
-    
+  
     photos: null,
     
     approvalStatus: 'pending',
@@ -54,11 +54,25 @@ export const getDriver = async (phone) => {
 
 export const phoneExists = async (phone) => (await getDriver(phone)) !== null;
 
-
+// El celular es el ID del documento, igual que idMeal en el ejemplo de clase
 export const createDriver = async (personalData, vehicle, documents) => {
   const driver = buildDriverDocument(personalData, vehicle, documents);
   await setDoc(doc(db, COLLECTION, driver.phone), driver);
   return driver.phone;
 };
 
+// AI-assisted: see docs/AI_LOG.md #38
+// Elimina al conductor y comprueba que en la base de datos no quede nada.
+
+
+export const deleteDriver = async (phone) => {
+  await deleteDoc(doc(db, COLLECTION, phone));
+
+  // Verificación: el documento ya no debe existir
+  if (await phoneExists(phone)) {
+    throw new Error('El conductor no se eliminó por completo. Intenta de nuevo.');
+  }
+};
+
+// Servicio de conductores en Firestore: colección drivers, un documento por celular.
 // Servicio de conductores en Firestore: colección drivers, un documento por celular.
