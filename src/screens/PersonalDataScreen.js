@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #19
-// Pestaña 1 del registro: datos personales del conductor (sección 2 del enunciado)
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
