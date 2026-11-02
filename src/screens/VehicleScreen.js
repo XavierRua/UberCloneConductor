@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #20
-// Pestaña 2 del registro: datos del vehículo (sección 2 del enunciado)
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
