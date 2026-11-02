@@ -526,4 +526,138 @@ Usado tal cual: cierre del <View> de cada fila.
 Modificado / descartado: [completar, o "Nada"].
 Archivos y commit: [f7153e8]
 Verificación: [p. ej. la pantalla compila en Expo Go y muestra cada pestaña con su ícono de completa o pendiente]
-Aprendizaje: [completar con tus palabras]
+
+-------------------------------------------------------------------------------------------
+Entrada #33
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir las funciones que consultan y crean el documento del conductor en Firestore usando el celular como id.
+Prompt: corrige este codigo
+
+javascript
+export const getDriver = async (phone) => {
+  const snapshot = await getDoc(doc(db, COLLECTION, phone));
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+};
+
+
+export const phoneExists = async (phone) => (await getDriver(phone)) !== null;
+
+
+export const createDriver = async (personalData, vehicle, documents) => {
+  const driver = buildDriverDocument(personalData, vehicle, documents);
+  await setDoc(doc(db, COLLECTION, driverphone), driver);
+  return driverphone;
+Resumen de la respuesta: Claude identificó que createDriver no cierra la función (};) y que usa la variable driverphone, que no está definida; la reemplazó por el celular tomado de personalData y normalizado. Agregó una verificación con phoneExists antes de guardar, porque setDoc sobrescribe sin aviso el documento de otro conductor con el mismo celular, y una validación para que getDriver no falle con un celular vacío. Recordó los imports necesarios. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. funciones corregidas getDriver, phoneExists y createDriver].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [cffbf28]
+Verificación: [p. ej. al registrar un conductor aparece su documento en Firestore con el celular como id, y al intentar registrar el mismo celular se muestra el mensaje de duplicado]
+
+--------------------------------------------------------------------------------------------
+Entrada #34
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir el contexto que guarda la sesión del conductor (SessionContext y SessionProvider).
+Prompt:
+
+corrige el sigueintte codigo
+
+javascript
+import usePersistentState from '../hooks/usePersistentState';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+
+export const SessionContext = createContext(null);
+
+export function SessionProvider({ children }) {
+  const { value: driverPhone, update, ready } = usePersistentState(STORAGE_KEYS.SESSION, null);
+
+  const startSession = useCallback((phone) => update(phone), [update]);
+  const endSession = useCallback(() => update(null), [update]);
+
+  const value = useMemo(
+    () => ({ driverPhone, ready, startSession, endSession }),
+    [driverPhone, ready, startSession, endSession]
+  );
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+Resumen de la respuesta: Claude identificó que faltaba importar createContext, useCallback y useMemo desde react, lo que produce un ReferenceError. Confirmó que el resto de la lógica es correcta y propuso un hook useSession que valida que el componente esté dentro del SessionProvider, además de envolver la app con el proveedor y esperar ready antes de decidir la pantalla inicial. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: importación de los hooks de React.
+Modificado / descartado: [completar: p. ej. hook useSession].
+Archivos y commit: [cffbf28]
+Verificación: [p. ej. tras registrarse, cerrar y reabrir la app en Expo Go, la sesión se conserva; al cerrar sesión vuelve a la pantalla inicial]
+Aprendizaje: faltaba importar createContext, useCallback y useMemo por tal motivo medaba un error
+
+--------------------------------------------------------------------------------------------
+Entrada #35
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender el significado del comentario "Hook que encapsula el acceso al contexto de sesión".
+Prompt: que Hook encapsula el acceso al contexto de sesión
+Resumen de la respuesta: Claude explicó que "encapsular" significa reunir en una sola función los detalles de cómo se obtiene algo, para que el resto del código no tenga que conocerlos. El hook useSession oculta el uso de useContext(SessionContext) y la validación de que el componente esté dentro del SessionProvider, de modo que las pantallas solo llaman useSession(). Advirtió que, si esa frase está en el código, debe ir como comentario (//). Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó: Consulta conceptual; se usó para documentar el hook useSession.
+Archivos y commit: [cffbf28]
+Verificación: [p. ej. revisión del hook useSession en el archivo de sesión]
+
+--------------------------------------------------------------------------------------------
+Entrada #36
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir los errores de sintaxis de un objeto de estilos con tarjeta y etiqueta de estado (badge).
+Prompt:
+
+corrige el objeto:
+
+javascript
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.xl, gap: spacing.lg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  }
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  badgeText: { fontWeight: '700', color: colors.text },
+Resumen de la respuesta: Claude identificó dos errores de sintaxis: falta la coma después del objeto card y falta cerrar el StyleSheet.create con });. Entregó el objeto corregido y recordó verificar que ../theme exporte radius.full y colors.text. Enlace a la conversación: [pegar enlace]
+Qué se usó / modificó / descartó:
+Usado tal cual: coma después de card y cierre });.
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [cffbf28]
+Verificación: [p. ej. la pantalla compila en Expo Go y la etiqueta se muestra con bordes redondeados debajo de la tarjeta]
+
+--------------------------------------------------------------------------------------------
+
+Entrada #37
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir el error que aparece al enviar el registro del conductor.
+Prompt:
+
+al enviar el registro en la pantalla del celular dice " no se pudo enviar el registro : prpety getDoc doent exist"
+
+Resumen de la respuesta: Claude explicó que el error significa que la función getDoc se usa en el servicio de conductores (dentro de getDriver) sin haberla importado desde firebase/firestore. Indicó agregar import { doc, getDoc, setDoc } from 'firebase/firestore'; junto con el import de db, guardar y recargar la app, y revisar si aparece un error similar con otra función. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: import de doc, getDoc y setDoc desde firebase/firestore.
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit:[cffbf28]
+Verificación: [p. ej. al enviar el registro en Expo Go ya no aparece el error y el documento del conductor se crea en Firestore]
+Aprendizaje: se debe utilizar import { doc, getDoc, setDoc } para utilizar la funcion.
