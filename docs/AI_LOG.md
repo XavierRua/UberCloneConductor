@@ -346,4 +346,110 @@ Usado tal cual: [completar: p. ej. función toText en lugar de value.trim()].
 Modificado / descartado: [completar: p. ej. aceptar el año siguiente en validateYear, renombrar document].
 Archivos y commit: src/utils/[archivo de validaciones].js — [564840404a16e295323cbf7b480c85301ad3037d]
 Verificación: [completar: mensaje de error original y confirmación de que desapareció en Expo Go]
+
+--------------------------------------------------------------------------------------------
+
+Entrada #23
+Fecha: 01-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender para qué sirven las librerías de selector de fechas, listas desplegables nativas y selección de imágenes del formulario de registro.
+Prompt:
+
+npx expo install @react-native-community/datetimepicker @react-native-picker/picker expo-image-picker
+
+Resumen de la respuesta: Claude explicó que datetimepicker muestra el calendario nativo y devuelve objetos Date compatibles con las validaciones de fechas; picker es la lista desplegable nativa, que reemplaza al componente SelectField; y expo-image-picker permite elegir fotos de la galería o la cámara y devuelve su uri. Advirtió que subir las imágenes depende de la decisión pendiente sobre el almacenamiento. Incluyó ejemplos de uso de cada una. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. instalación de las tres librerías, ejemplos de uso].
+Modificado / descartado: [completar: p. ej. se usa Picker en lugar de SelectField, o al contrario].
+Verificación: [p. ej. npx expo-doctor sin errores; el calendario, la lista y la galería abren en Expo Go]
+Archivos y commit: [278153b]
+Aprendizaje: Muestra el calendario nativo del celular
+
+--------------------------------------------------------------------------------------------
+Entrada #24
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Crear un botón reutilizable para las pantallas de la app.
+Prompt:
+
+codigo para crear un boton en js
+
+Resumen de la respuesta: Claude explicó que el Button nativo de React Native casi no permite personalizar estilos y entregó el componente AppButton con Pressable, con variantes primary (relleno) y secondary (borde), estados deshabilitado y presionado, indicador de carga (ActivityIndicator) y propiedades de accesibilidad. Incluyó ejemplos de uso en el formulario de registro. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. componente AppButton completo].
+Modificado: [completar: p. ej. colores reemplazados por los de ../theme].
+Descartado: [completar, o "Nada"].
+Archivos y commit: [278153b]
+Verificación: [p. ej. el botón responde al toque, se ve atenuado al deshabilitarlo y muestra el indicador mientras loading es true en Expo Go]
+Aprendizaje: se utiliza la funcion onPress para que al tocar la pantalla este recuadro tenga funcionalidad
+
+-------------------------------------------------------------------------------------------
+Entrada #25
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Encontrar el error del componente SelectField construido con @react-native-picker/picker.
+Prompt: cual es el error de este codigo : se comparte el codigo a la IA
+
+Resumen de la respuesta: Claude identificó que el archivo no tiene imports: View, Text, StyleSheet, Picker, colors, spacing, typography y radius no están definidos, lo que produce un ReferenceError. Entregó los imports necesarios y advirtió que ../theme debe exportar radius y las propiedades usadas. Sugirió deshabilitar la opción vacía en Android y reemplazar el SelectField anterior hecho con Modal. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. imports agregados].
+Modificado / descartado: [completar: p. ej. enabled={false} en la opción vacía].
+Archivos y commit: [278153b]
+Verificación: [p. ej. la lista se abre en Expo Go, muestra las opciones y el borde cambia de color al haber error]
+Aprendizaje: Olvidé traer algunos componentes.
+
+--------------------------------------------------------------------------------------------
+Entrada #26
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender qué es el componente Picker y cómo funciona dentro del formulario de registro.
+Prompt:
+
+que es y como funciona Picker
+
+Resumen de la respuesta: Claude explicó que Picker es la lista desplegable nativa de Android e iOS y que funciona como componente controlado: selectedValue indica la opción elegida y onValueChange actualiza el estado. Describió las propiedades de Picker y Picker.Item, las diferencias entre plataformas (diálogo o desplegable en Android, rueda en iOS) y la importancia de que los valores sean del mismo tipo, porque la comparación es estricta. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó: Consulta conceptual; se usó como referencia para el componente SelectField.
+Archivos y commit: [278153b]
+Verificación: [p. ej. contraste con la documentación de @react-native-picker/picker y prueba del componente en Expo Go]
+Aprendizaje: para implementar la lista desplegable ya existe librerias que tiene el codigo, sin tener que crearlo desde cero.
+
+--------------------------------------------------------------------------------------------
+
+Entrada #27
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Corregir la función formatDate, que muestra una fecha en formato DD/MM/AAAA.
+Prompt:
+
+corrige el siguiente codigo : const formatDate = (date) => { const day = String(date.getDate()).paStart(2, '0'); const month = String(date.getMonth() + 1).padStart(2, '0'); return ${day}/${month}/${date.getFullYear()}; };
+
+Resumen de la respuesta: Claude identificó el error de escritura paStart en lugar de padStart, que produce TypeError: ... is not a function. Agregó una validación para que la función devuelva un texto vacío cuando la fecha es null o inválida, porque los campos de fecha del formulario empiezan en null. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. función corregida con la validación de fecha].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [278153b]
+Verificación: [p. ej. formatDate(new Date(2000, 4, 7)) devuelve 07/05/2000 y formatDate(null) devuelve un texto vacío]
+Aprendizaje: digité mal uno de los comandos paStart en lugar de padStart
+
+--------------------------------------------------------------------------------------------
+Entrada #28
+Fecha: 02-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Crear un componente reutilizable para agregar fotos en el formulario de registro del conductor.
+Prompt:
+
+Estoy haciendo una app en React Native con Expo SDK 58 y la pruebo en Expo Go. Necesito un componente reutilizable en src/components/ImageField.js para agregar fotos en un formulario de registro ayudame a realizarlo
+
+Resumen de la respuesta: Claude creó ImageField con expo-image-picker: al tocarlo ofrece tomar la foto con la cámara o elegirla de la galería, pide los permisos, muestra la vista previa con el recorte indicado (aspect) y permite cambiar o quitar la foto. Sigue la misma interfaz que SelectField (label, value, onChange, error, showError) y tiene forma circular para la foto de perfil. Aclaró que solo guarda la ruta local; la subida depende de la decisión pendiente sobre el almacenamiento. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. componente ImageField completo].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [278153b]
+Verificación: [p. ej. en Expo Go se tomó una foto con la cámara y otra desde la galería, se vio la vista previa, se quitó la foto y apareció el error al intentar avanzar sin foto]
 Aprendizaje: [completar con tus palabras]
