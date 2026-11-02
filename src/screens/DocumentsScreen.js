@@ -1,3 +1,10 @@
+// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #32
+
+// AI-assisted: see docs/AI_LOG.md #21
+// Pestaña 3 del registro: documentos, pagos y términos (sección 2 del enunciado).
+// Aquí está el botón Enviar registro, que solo se habilita con las tres pestañas válidas.
+// Envío a Firestore: see docs/AI_LOG.md #22
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +14,9 @@ import ImageField from '../components/ImageField';
 import CheckboxField from '../components/CheckboxField';
 import PrimaryButton from '../components/PrimaryButton';
 import useRegister from '../hooks/useRegister';
+import useSession from '../hooks/useSession';
 import { requiresTechnicalReview } from '../utils/validators';
+import { createDriver, phoneExists } from '../services/driverService';
 import { COMMISSION_PERCENT } from '../config/pricing';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -30,10 +39,21 @@ const TAB_NAMES = {
 };
 
 export default function DocumentsScreen() {
-  const { documents, vehicle, errors, tabsValid, canSubmit, updateDocuments } = useRegister();
+  const {
+    personalData,
+    vehicle,
+    documents,
+    errors,
+    tabsValid,
+    canSubmit,
+    updateDocuments,
+    resetRegister,
+  } = useRegister();
+  const { startSession } = useSession();
 
   const [touched, setTouched] = useState({});
-  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const fieldErrors = errors.documents;
   const pending = Object.keys(fieldErrors).length;
 
@@ -61,9 +81,28 @@ export default function DocumentsScreen() {
     setTouched(Object.fromEntries(fields.map((field) => [field, true])));
   };
 
-  const handleSubmit = () => {
-    // Temporal: el guardado en Firebase se implementa en un siguiente avance
-    setSubmitMessage('Registro completo y válido. El guardado se implementa en el siguiente avance.');
+  // Guarda el conductor en Firestore y abre la sesión
+  const handleSubmit = async () => {
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      const phone = personalData.phone.trim();
+
+      // Un solo conductor por celular
+      if (await phoneExists(phone)) {
+        setSubmitError('Ya existe un conductor registrado con este celular.');
+        return;
+      }
+
+      // Pendiente: subir las fotos a Storage antes de guardar (avance 10)
+      await createDriver(personalData, vehicle, documents);
+      resetRegister();
+      await startSession(phone);
+    } catch (error) {
+      setSubmitError(`No se pudo enviar el registro: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -183,8 +222,6 @@ export default function DocumentsScreen() {
         showError={touched.termsAccepted}
       />
 
-// AI-assisted: see docs/AI_LOG.md #32
-
       {/* Resumen de las tres pestañas antes de enviar */}
       <View style={styles.summary}>
         {Object.entries(TAB_NAMES).map(([key, name]) => (
@@ -206,16 +243,19 @@ export default function DocumentsScreen() {
         </Pressable>
       )}
 
-      <PrimaryButton label="Enviar registro" onPress={handleSubmit} disabled={!canSubmit} />
+      <PrimaryButton
+        label={submitting ? 'Enviando...' : 'Enviar registro'}
+        onPress={handleSubmit}
+        disabled={!canSubmit || submitting}
+      />
 
-      {submitMessage !== '' && (
-        <Text style={[typography.caption, styles.submitMessage]}>{submitMessage}</Text>
+      {/* Error del envío, debajo del botón (no en un Alert) */}
+      {submitError !== '' && (
+        <Text style={[typography.error, styles.submitError]}>{submitError}</Text>
       )}
     </ScrollView>
   );
 }
-
-// AI-assisted: see docs/AI_LOG.md #31
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
@@ -235,8 +275,9 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   link: { marginBottom: spacing.lg },
   linkText: { color: colors.accent, fontWeight: '600' },
-  submitMessage: { marginTop: spacing.md, textAlign: 'center', color: colors.success },
+  submitError: { marginTop: spacing.md, textAlign: 'center' },
 });
+
 
 /* avances en este archivo:  
 
