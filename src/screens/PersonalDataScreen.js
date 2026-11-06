@@ -7,6 +7,7 @@ import DateField from '../components/DateField';
 import ImageField from '../components/ImageField';
 import PrimaryButton from '../components/PrimaryButton';
 import useRegister from '../hooks/useRegister';
+import useKeyboardPadding from '../hooks/useKeyboardPadding';
 import { GENDERS, LANGUAGES } from '../constants/opcionesRegistro';
 import { colors, spacing, typography } from '../theme';
 
@@ -27,6 +28,7 @@ const defaultBirthDate = new Date(new Date().getFullYear() - 25, 0, 1);
 export default function PersonalDataScreen() {
   const navigation = useNavigation();
   const { personalData, errors, tabsValid, updatePersonalData } = useRegister();
+  const keyboardPadding = useKeyboardPadding();
 
   // Campos que el conductor ya tocó: solo a esos se les muestra el error
   const [touched, setTouched] = useState({});
@@ -53,8 +55,9 @@ export default function PersonalDataScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: spacing.xxl + keyboardPadding }]}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
       {/* Estado de la pestaña */}
       <Text style={[typography.caption, styles.status]}>
@@ -77,7 +80,7 @@ export default function PersonalDataScreen() {
         onBlur={() => touch('fullName')}
         error={fieldErrors.fullName}
         showError={touched.fullName}
-        placeholder="Ej: Xavier Rua"
+        placeholder="Ej: Juan Pérez"
         maxLength={50}
         autoCapitalize="words"
       />
@@ -154,7 +157,7 @@ export default function PersonalDataScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  content: { padding: spacing.xl },
   status: { marginBottom: spacing.lg },
 });
 
@@ -163,5 +166,6 @@ const styles = StyleSheet.create({
 
 1. Datos personales” y “Campos pendientes: 7
 2. se crea el formulario en el siguiente avance
+3. 
 
 */
