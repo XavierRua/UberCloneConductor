@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -7,18 +8,21 @@ import RootNavigator from './src/navigation/RootNavigator';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      {/* Sesión: qué conductor está registrado en este celular */}
-      <SessionProvider>
-        {/* Registro: datos de las tres pestañas mientras se llenan */}
-        <RegisterProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
-        </RegisterProvider>
-      </SessionProvider>
-      <StatusBar style="dark" />
-    </SafeAreaProvider>
+    // Necesario para los gestos del menú lateral (deslizar para abrir)
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        {/* Sesión: qué conductor está registrado en este celular */}
+        <SessionProvider>
+          {/* Registro: datos de las tres pestañas mientras se llenan */}
+          <RegisterProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+          </RegisterProvider>
+        </SessionProvider>
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -32,3 +36,5 @@ export default function App() {
 // prueba de validaciones
 // version definitiva con navegacion (las tres pestañas del registro) y contexto (para compartir los datos entre las tres pestañas)
 // Punto de entrada de la app: proveedores globales y navegación
+// Punto de entrada de la app: proveedores globales y navegación
+// GestureHandlerRootView para el menú lateral
