@@ -1,10 +1,11 @@
 // AI-assisted: see docs/AI_LOG.md #36
+// AI-assisted: see docs/AI_LOG.md #40
 
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import useSession from '../hooks/useSession';
-import { deleteDriver, getDriver } from '../services/driverService';
+import { deleteDriver, subscribeToDriver } from '../services/driverService';
 import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -13,7 +14,7 @@ const APPROVAL_LABELS = {
   approved: 'Aprobado',
 };
 
-
+// Busca el texto visible de una opción a partir de su valor
 const findLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
 
 export default function ProfileScreen() {
@@ -23,40 +24,38 @@ export default function ProfileScreen() {
   const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  
+  // Escucha al conductor en tiempo real: si cambia approvalStatus en Firebase, la pantalla se actualiza sola
   useEffect(() => {
-    let active = true;
+    const unsubscribe = subscribeToDriver(
+      driverPhone,
+      (data) => {
+        setDriver(data);
+        setLoading(false);
+      },
+      (error) => {
+        setErrorMessage(`No se pudieron cargar los datos: ${error.message}`);
+        setLoading(false);
+      }
+    );
 
-    getDriver(driverPhone)
-      .then((data) => {
-        if (active) setDriver(data);
-      })
-      .catch((error) => {
-        if (active) setErrorMessage(`No se pudieron cargar los datos: ${error.message}`);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
+    // Función de limpieza: deja de escuchar cuando la pantalla se cierra o cambia el celular
+    return unsubscribe;
   }, [driverPhone]);
 
-  
+  // Borra el conductor de Firestore y cierra la sesión
   const removeDriver = useCallback(async () => {
     setErrorMessage('');
     setDeleting(true);
     try {
       await deleteDriver(driverPhone);
-      await endSession(); 
+      await endSession(); // al no haber sesión, la app vuelve al registro
     } catch (error) {
       setErrorMessage(`No se pudo eliminar el usuario: ${error.message}`);
       setDeleting(false);
     }
   }, [driverPhone, endSession]);
 
-  
+  // Pide confirmación antes de borrar: la acción no se puede deshacer
   const confirmDelete = useCallback(() => {
     Alert.alert(
       'Eliminar usuario',
@@ -76,12 +75,14 @@ export default function ProfileScreen() {
     );
   }
 
+  const isApproved = driver?.approvalStatus === 'approved';
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       {errorMessage !== '' && <Text style={typography.error}>{errorMessage}</Text>}
 
       {/* Si el documento ya no existe en Firestore (por ejemplo, se borró desde la consola) */}
-      {!driver && errorMessage === '' && (
+      {!driver && errorMessage === '' && !deleting && (
         <Text style={typography.body}>No se encontró un conductor con el celular {driverPhone}.</Text>
       )}
 
@@ -93,17 +94,20 @@ export default function ProfileScreen() {
             Vehículo: {findLabel(VEHICLE_CATEGORIES, driver.vehicle.category)} · {driver.vehicle.plate}
           </Text>
 
-          {/* Estado de la cuenta (enunciado: queda pendiente hasta que se apruebe) */}
+          {/* Estado de la cuenta: cambia en vivo cuando se aprueba en Firebase */}
           <View
-            style={[
-              styles.badge,
-              { backgroundColor: driver.approvalStatus === 'approved' ? colors.success : colors.warning },
-            ]}
+            style={[styles.badge, { backgroundColor: isApproved ? colors.success : colors.warning }]}
           >
-            <Text style={styles.badgeText}>
+            <Text style={[styles.badgeText, isApproved && styles.badgeTextApproved]}>
               {APPROVAL_LABELS[driver.approvalStatus] ?? driver.approvalStatus}
             </Text>
           </View>
+
+          <Text style={typography.caption}>
+            {isApproved
+              ? 'Tu cuenta fue aprobada. Ya puedes ponerte Disponible para recibir viajes.'
+              : 'Tu cuenta está en revisión. No podrás ponerte Disponible hasta que sea aprobada.'}
+          </Text>
         </View>
       )}
 
@@ -140,8 +144,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   badgeText: { fontWeight: '700', color: colors.text },
+  badgeTextApproved: { color: colors.primaryText },
 });
 
 // modificaciones al archivo: 
 // Perfil del conductor: lee sus datos desde Firestore. En el avance 12 se agrega Eliminar usuario.
 // Eliminar usuario
+// Actualización en tiempo real con onSnapshot
