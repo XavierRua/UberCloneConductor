@@ -704,4 +704,22 @@ Qué se usó / modificó / descartó:
 Usado tal cual: [completar: p. ej. componente FormScreen].
 Modificado / descartado: [completar: p. ej. behavior cambiado a 'padding' en Android, o "Nada"].
 Archivos y commit: s [4bfe8f7]
-Verificación: [p. ej. en Expo Go, al tocar el campo de correo el teclado aparece, el campo queda visible y se puede hacer scroll hasta el botón]
+
+--------------------------------------------------------------------------------------------
+
+Entrada #40
+Fecha: 06-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Reflejar en el celular, en tiempo real, el cambio de estado de aprobación hecho en Firebase (observación de la revisión).
+Prompt:
+
+2 punto: al crear el registro este queda en 'pendiente de aprobacion' debo ingresar a firebass y cambiar el estado a aprobado y se debe reflegar en el celular
+
+Resumen de la respuesta: Claude propuso escuchar el documento del conductor con onSnapshot de Firestore: la función listenToDriver en el servicio de conductores, el hook useDriver, que actualiza el estado de la pantalla con cada cambio y deja de escuchar al salir, y las constantes DRIVER_STATUS y STATUS_DISPLAY con el texto y color de cada estado. Explicó cómo mostrar la etiqueta en la pantalla y cómo probarlo cambiando el campo status en la consola de Firebase. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. listenToDriver, hook useDriver, constantes de estado].
+Modificado / descartado: [completar: p. ej. valores de estado adaptados a los que ya guardaba buildDriverDocument].
+Archivos y commit: [c0c8d70]
+Verificación: [p. ej. con la app abierta en Expo Go se cambió el campo status de pending a approved en la consola de Firebase y la etiqueta cambió a "Aprobado" sin recargar la app]
+Aprendizaje: [completar con tus palabras]
