@@ -1,6 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #18
-// Navegación Tab del registro: Datos personales, Vehículo y Documentos (sección 2 del enunciado)
-// Ocultar pestañas con el teclado: see docs/AI_LOG.md #N
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import PersonalDataScreen from '../screens/PersonalDataScreen';
@@ -27,6 +24,7 @@ export default function RegisterTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false, // el encabezado lo pone el Stack: "Registro de conductor"
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarHideOnKeyboard: true, // la barra no tapa el formulario cuando se abre el teclado

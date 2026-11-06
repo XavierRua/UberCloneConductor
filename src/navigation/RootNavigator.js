@@ -1,7 +1,10 @@
+// Navegación principal: sin sesión, Iniciar sesión y Registro; con sesión, el menú lateral del conductor
+// Iniciar sesión y Drawer: see docs/AI_LOG.md #N
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from '../screens/LoginScreen';
 import RegisterTabs from './RegisterTabs';
-import ProfileScreen from '../screens/ProfileScreen';
+import DriverDrawer from './DriverDrawer';
 import useSession from '../hooks/useSession';
 import { colors } from '../theme';
 
@@ -22,9 +25,17 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator>
       {driverPhone ? (
-        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Mi perfil' }} />
+        // Con sesión: el menú lateral tiene su propio encabezado con el ícono ☰
+        <Stack.Screen name="Driver" component={DriverDrawer} options={{ headerShown: false }} />
       ) : (
-        <Stack.Screen name="Register" component={RegisterTabs} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar sesión' }} />
+          <Stack.Screen
+            name="Register"
+            component={RegisterTabs}
+            options={{ title: 'Registro de conductor' }}
+          />
+        </>
       )}
     </Stack.Navigator>
   );
@@ -33,5 +44,3 @@ export default function RootNavigator() {
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });
-
-// Navegación principal: sin sesión muestra el registro; con sesión, el perfil del conductor
