@@ -2,6 +2,7 @@
 // AI-assisted: see docs/AI_LOG.md #32
 // AI-assisted: see docs/AI_LOG.md #21
 
+
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import useSession from '../hooks/useSession';
 import useKeyboardPadding from '../hooks/useKeyboardPadding';
 import { requiresTechnicalReview } from '../utils/validators';
 import { createDriver, phoneExists } from '../services/driverService';
+import { uploadDriverPhotos } from '../services/cloudinaryService';
 import { COMMISSION_PERCENT } from '../config/pricing';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -52,6 +54,7 @@ export default function DocumentsScreen() {
 
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [progressText, setProgressText] = useState('');
   const [submitError, setSubmitError] = useState('');
   const fieldErrors = errors.documents;
   const pending = Object.keys(fieldErrors).length;
@@ -80,27 +83,42 @@ export default function DocumentsScreen() {
     setTouched(Object.fromEntries(fields.map((field) => [field, true])));
   };
 
-  // Guarda el conductor en Firestore y abre la sesión
+  // Sube las fotos a Cloudinary, guarda el conductor en Firestore y abre la sesión
   const handleSubmit = async () => {
     setSubmitError('');
     setSubmitting(true);
     try {
       const phone = personalData.phone.trim();
 
-      // Un solo conductor por celular
+      // Un solo conductor por celular (se revisa antes de subir fotos, para no subirlas en vano)
+      setProgressText('Verificando celular...');
       if (await phoneExists(phone)) {
         setSubmitError('Ya existe un conductor registrado con este celular.');
         return;
       }
 
-      // Pendiente: subir las fotos a Storage antes de guardar (avance 10)
-      await createDriver(personalData, vehicle, documents);
+      // Rutas locales de las fotos; la revisión técnico-mecánica solo si aplica
+      const photoUris = {
+        profile: personalData.profilePhoto,
+        vehicle: vehicle.vehiclePhoto,
+        license: documents.licensePhoto,
+        soat: documents.soatPhoto,
+        technicalReview: needsReview ? documents.technicalReviewPhoto : '',
+      };
+
+      const photos = await uploadDriverPhotos(photoUris, (current, total) =>
+        setProgressText(`Subiendo fotos (${current} de ${total})...`)
+      );
+
+      setProgressText('Guardando registro...');
+      await createDriver(personalData, vehicle, documents, photos);
       resetRegister();
       await startSession(phone);
     } catch (error) {
       setSubmitError(`No se pudo enviar el registro: ${error.message}`);
     } finally {
       setSubmitting(false);
+      setProgressText('');
     }
   };
 
@@ -244,7 +262,7 @@ export default function DocumentsScreen() {
       )}
 
       <PrimaryButton
-        label={submitting ? 'Enviando...' : 'Enviar registro'}
+        label={submitting ? progressText || 'Enviando...' : 'Enviar registro'}
         onPress={handleSubmit}
         disabled={!canSubmit || submitting}
       />

@@ -8,8 +8,8 @@ import { COMMISSION_RATE } from '../config/pricing';
 
 const COLLECTION = 'drivers';
 
-// Arma el documento de Firestore a partir de las tres pestañas del registro
-const buildDriverDocument = (personalData, vehicle, documents) => {
+// Arma el documento de Firestore a partir de las tres pestañas del registro y las fotos subidas
+const buildDriverDocument = (personalData, vehicle, documents, photos) => {
   const needsReview = requiresTechnicalReview(vehicle.year);
 
   return {
@@ -38,8 +38,8 @@ const buildDriverDocument = (personalData, vehicle, documents) => {
       termsAccepted: true,
       commissionRate: COMMISSION_RATE, // comisión aceptada al registrarse
     },
-    // Pendiente: subida de fotos (avance 10). Aquí irán las URL de Storage.
-    photos: null,
+    // URL y publicId de cada foto en Cloudinary: { profile, vehicle, license, soat, technicalReview? }
+    photos,
     // pending = Pendiente de aprobación; se aprueba cambiando este campo en la base de datos
     approvalStatus: 'pending',
     createdAt: serverTimestamp(),
@@ -56,8 +56,8 @@ export const getDriver = async (phone) => toDriver(await getDoc(doc(db, COLLECTI
 export const phoneExists = async (phone) => (await getDriver(phone)) !== null;
 
 // El celular es el ID del documento, igual que idMeal en el ejemplo de clase
-export const createDriver = async (personalData, vehicle, documents) => {
-  const driver = buildDriverDocument(personalData, vehicle, documents);
+export const createDriver = async (personalData, vehicle, documents, photos) => {
+  const driver = buildDriverDocument(personalData, vehicle, documents, photos);
   await setDoc(doc(db, COLLECTION, driver.phone), driver);
   return driver.phone;
 };
@@ -72,8 +72,9 @@ export const subscribeToDriver = (phone, onChange, onError) =>
   );
 
 // AI-assisted: see docs/AI_LOG.md #23
-// Elimina al conductor y comprueba que en la base de datos no quede nada.
-// Pendiente (avance 10): borrar también sus fotos de Storage (carpeta drivers/{celular}).
+// Elimina al conductor y comprueba que en la base de datos no quede nada (incluidas las URL de sus fotos).
+// Las imágenes en Cloudinary solo se pueden borrar con la API Secret, que no puede ir en la app;
+// su borrado queda para el backend del proyecto.
 // Nota: deleteDoc no borra subcolecciones; si en la segunda entrega se agregan (por ejemplo, viajes),
 // habrá que borrarlas aquí también.
 export const deleteDriver = async (phone) => {
