@@ -688,4 +688,20 @@ Usado tal cual: [completar: p. ej. import de deleteDoc, validación del celular]
 Modificado / descartado: [completar: p. ej. confirmación con Alert, verificación posterior].
 Archivos y commit:  [c0921c1]
 Verificación: [p. ej. al tocar Eliminar usuario y confirmar, el documento desaparece de Firestore y la app vuelve a la pantalla de registro]
-Aprendizaje: [completar con tus palabras]
+
+
+--------------------------------------------------------------------------------------------
+
+Entrada #39
+Fecha: 06-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Agregar scroll al formulario de registro para que el teclado no tape los campos al escribir.
+Prompt:
+al ralizar el regisro cuando voy a escribir el correo, se activa el teclado ya tapa la pantalla, hace falta un scroll
+Resumen de la respuesta: Claude creó el componente FormScreen, que combina KeyboardAvoidingView (reduce el espacio disponible cuando aparece el teclado) con ScrollView (permite desplazarse hasta el campo), con espacio inferior extra, keyboardShouldPersistTaps="handled" y ocultar el teclado al deslizar. Indicó envolver el contenido de cada pestaña del registro, ocultar la barra de pestañas con el teclado abierto (tabBarHideOnKeyboard) y pasar al siguiente campo con returnKeyType y onSubmitEditing. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. componente FormScreen].
+Modificado / descartado: [completar: p. ej. behavior cambiado a 'padding' en Android, o "Nada"].
+Archivos y commit: s [4bfe8f7]
+Verificación: [p. ej. en Expo Go, al tocar el campo de correo el teclado aparece, el campo queda visible y se puede hacer scroll hasta el botón]
