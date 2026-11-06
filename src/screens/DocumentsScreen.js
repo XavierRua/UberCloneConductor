@@ -1,10 +1,7 @@
 // AI-assisted: see docs/AI_LOG.md #31
 // AI-assisted: see docs/AI_LOG.md #32
-
 // AI-assisted: see docs/AI_LOG.md #21
-// Pestaña 3 del registro: documentos, pagos y términos (sección 2 del enunciado).
-// Aquí está el botón Enviar registro, que solo se habilita con las tres pestañas válidas.
-// Envío a Firestore: see docs/AI_LOG.md #22
+
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +12,7 @@ import CheckboxField from '../components/CheckboxField';
 import PrimaryButton from '../components/PrimaryButton';
 import useRegister from '../hooks/useRegister';
 import useSession from '../hooks/useSession';
+import useKeyboardPadding from '../hooks/useKeyboardPadding';
 import { requiresTechnicalReview } from '../utils/validators';
 import { createDriver, phoneExists } from '../services/driverService';
 import { COMMISSION_PERCENT } from '../config/pricing';
@@ -50,6 +48,7 @@ export default function DocumentsScreen() {
     resetRegister,
   } = useRegister();
   const { startSession } = useSession();
+  const keyboardPadding = useKeyboardPadding();
 
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -108,8 +107,9 @@ export default function DocumentsScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: spacing.xxl + keyboardPadding }]}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
       {/* Estado de la pestaña */}
       <Text style={[typography.caption, styles.status]}>
@@ -259,7 +259,7 @@ export default function DocumentsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  content: { padding: spacing.xl },
   status: { marginBottom: spacing.sm },
   section: { marginTop: spacing.md, marginBottom: spacing.md },
   note: { marginBottom: spacing.lg },
@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
   linkText: { color: colors.accent, fontWeight: '600' },
   submitError: { marginTop: spacing.md, textAlign: 'center' },
 });
-
 
 /* avances en este archivo:  
 

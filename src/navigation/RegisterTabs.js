@@ -1,5 +1,6 @@
 // AI-assisted: see docs/AI_LOG.md #18
 // Navegación Tab del registro: Datos personales, Vehículo y Documentos (sección 2 del enunciado)
+// Ocultar pestañas con el teclado: see docs/AI_LOG.md #N
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import PersonalDataScreen from '../screens/PersonalDataScreen';
@@ -28,6 +29,7 @@ export default function RegisterTabs() {
       screenOptions={({ route }) => ({
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarHideOnKeyboard: true, // la barra no tapa el formulario cuando se abre el teclado
         tabBarBadgeStyle: { backgroundColor: colors.success, color: colors.primaryText },
         tabBarIcon: ({ color, size }) => (
           <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
@@ -47,7 +49,7 @@ export default function RegisterTabs() {
       <Tab.Screen
         name="Documents"
         component={DocumentsScreen}
-        options={{ title: 'Documentos y pagos', tabBarBadge: badge(tabsValid.documents) }}
+        options={{ title: 'Documentos', tabBarBadge: badge(tabsValid.documents) }}
       />
     </Tab.Navigator>
   );

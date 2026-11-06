@@ -7,6 +7,7 @@ import SelectField from '../components/SelectField';
 import ImageField from '../components/ImageField';
 import PrimaryButton from '../components/PrimaryButton';
 import useRegister from '../hooks/useRegister';
+import useKeyboardPadding from '../hooks/useKeyboardPadding';
 import { requiresTechnicalReview } from '../utils/validators';
 import {
   VEHICLE_CATEGORIES,
@@ -29,6 +30,7 @@ const FIELDS = [
 export default function VehicleScreen() {
   const navigation = useNavigation();
   const { vehicle, errors, tabsValid, updateVehicle } = useRegister();
+  const keyboardPadding = useKeyboardPadding();
 
   // Campos que el conductor ya tocó: solo a esos se les muestra el error
   const [touched, setTouched] = useState({});
@@ -59,8 +61,9 @@ export default function VehicleScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: spacing.xxl + keyboardPadding }]}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
       {/* Estado de la pestaña */}
       <Text style={[typography.caption, styles.status]}>
@@ -176,7 +179,7 @@ export default function VehicleScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  content: { padding: spacing.xl },
   status: { marginBottom: spacing.lg },
   notice: {
     flexDirection: 'row',
