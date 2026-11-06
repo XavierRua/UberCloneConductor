@@ -722,4 +722,19 @@ Usado tal cual: [completar: p. ej. listenToDriver, hook useDriver, constantes de
 Modificado / descartado: [completar: p. ej. valores de estado adaptados a los que ya guardaba buildDriverDocument].
 Archivos y commit: [c0c8d70]
 Verificación: [p. ej. con la app abierta en Expo Go se cambió el campo status de pending a approved en la consola de Firebase y la etiqueta cambió a "Aprobado" sin recargar la app]
-Aprendizaje: [completar con tus palabras]
+
+--------------------------------------------------------------------------------------------
+Fecha: 06-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender para qué sirven las librerías necesarias para el menú lateral de navegación.
+Prompt:
+
+para que sirve : npx expo install @react-navigation/drawer react-native-gesture-handler react-native-reanimated react-native-worklets
+
+Resumen de la respuesta: Claude explicó que @react-navigation/drawer crea el menú lateral, react-native-gesture-handler detecta el gesto de deslizar para abrirlo, react-native-reanimated anima su apertura en el hilo de la interfaz y react-native-worklets es la dependencia que Reanimated 4 necesita para ejecutar esas animaciones. Indicó envolver la app con GestureHandlerRootView, no agregar el plugin de Babel a mano porque babel-preset-expo lo configura, y reiniciar con caché limpia. Incluyó un ejemplo del menú del conductor. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. instalación de las librerías, GestureHandlerRootView].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit:  [720a0c6]
+Verificación: [p. ej. npx expo-doctor sin errores; el menú lateral abre con el botón y deslizando desde el borde en Expo Go]
