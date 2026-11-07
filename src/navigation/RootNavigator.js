@@ -1,8 +1,11 @@
+// AI-assisted: see docs/AI_LOG.md #22
 // Navegación principal: sin sesión, Iniciar sesión y Registro; con sesión, el menú lateral del conductor
 // Iniciar sesión y Drawer: see docs/AI_LOG.md #N
+// Detalle del viaje: see docs/AI_LOG.md #N
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
+import TripDetailScreen from '../screens/TripDetailScreen';
 import RegisterTabs from './RegisterTabs';
 import DriverDrawer from './DriverDrawer';
 import useSession from '../hooks/useSession';
@@ -25,8 +28,15 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator>
       {driverPhone ? (
-        // Con sesión: el menú lateral tiene su propio encabezado con el ícono ☰
-        <Stack.Screen name="Driver" component={DriverDrawer} options={{ headerShown: false }} />
+        <>
+          {/* Con sesión: el menú lateral tiene su propio encabezado con el ícono ☰ */}
+          <Stack.Screen name="Driver" component={DriverDrawer} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="TripDetail"
+            component={TripDetailScreen}
+            options={{ title: 'Detalle del viaje' }}
+          />
+        </>
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar sesión' }} />
