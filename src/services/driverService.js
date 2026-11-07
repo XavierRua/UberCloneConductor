@@ -2,6 +2,7 @@
 // AI-assisted: see docs/AI_LOG.md #40
 // AI-assisted: see docs/AI_LOG.md #42
 
+
 import {
   deleteDoc,
   doc,
@@ -14,6 +15,7 @@ import {
 import { db } from '../config/firebaseConfig';
 import { normalizePlate, requiresTechnicalReview } from '../utils/validators';
 import { COMMISSION_RATE } from '../config/pricing';
+import { deleteTripsByDriver } from './tripService';
 
 const COLLECTION = 'drivers';
 
@@ -100,12 +102,11 @@ export const updateDriverLocation = async (phone, { latitude, longitude }) => {
 };
 
 // AI-assisted: see docs/AI_LOG.md #23
-// Elimina al conductor y comprueba que en la base de datos no quede nada (incluidas las URL de sus fotos).
+// Elimina al conductor y sus viajes, y comprueba que en la base de datos no quede nada.
 // Las imágenes en Cloudinary solo se pueden borrar con la API Secret, que no puede ir en la app;
 // su borrado queda para el backend del proyecto.
-// Nota: deleteDoc no borra subcolecciones; si en la segunda entrega se agregan (por ejemplo, viajes),
-// habrá que borrarlas aquí también.
 export const deleteDriver = async (phone) => {
+  await deleteTripsByDriver(phone); // primero los viajes (colección trips)
   await deleteDoc(doc(db, COLLECTION, phone));
 
   // Verificación: el documento ya no debe existir
