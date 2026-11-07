@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { SessionProvider } from './src/context/SessionContext';
+import { ActiveTripProvider } from './src/context/ActiveTripContext';
 import { RegisterProvider } from './src/context/RegisterContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
@@ -13,12 +14,15 @@ export default function App() {
       <SafeAreaProvider>
         {/* Sesión: qué conductor está registrado en este celular */}
         <SessionProvider>
-          {/* Registro: datos de las tres pestañas mientras se llenan */}
-          <RegisterProvider>
-            <NavigationContainer>
-              <RootNavigator />
-            </NavigationContainer>
-          </RegisterProvider>
+          {/* Viaje activo del conductor, escuchado en tiempo real */}
+          <ActiveTripProvider>
+            {/* Registro: datos de las tres pestañas mientras se llenan */}
+            <RegisterProvider>
+              <NavigationContainer>
+                <RootNavigator />
+              </NavigationContainer>
+            </RegisterProvider>
+          </ActiveTripProvider>
         </SessionProvider>
         <StatusBar style="dark" />
       </SafeAreaProvider>

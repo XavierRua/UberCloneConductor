@@ -13,9 +13,30 @@ import {
 import { db } from '../config/firebaseConfig';
 import calculateFare from '../utils/calculateFare';
 import { COMMISSION_RATE } from '../config/pricing';
-import { getRouteSummary } from './osrmService';
+import { getRoute, getRouteSummary } from './osrmService';
 
 const COLLECTION = 'trips';
+
+// Estados de un viaje (sección 3 del enunciado); controlan qué se muestra en pantalla
+export const TRIP_STATUS = {
+  REQUESTED: 'requested',
+  ACCEPTED: 'accepted',
+  DRIVER_ARRIVING: 'driver_arriving',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  PAID: 'paid',
+  CANCELLED: 'cancelled',
+  REJECTED: 'rejected',
+};
+
+// Estados en los que el viaje sigue activo para el conductor
+const ACTIVE_STATUSES = [
+  TRIP_STATUS.ACCEPTED,
+  TRIP_STATUS.DRIVER_ARRIVING,
+  TRIP_STATUS.IN_PROGRESS,
+  TRIP_STATUS.COMPLETED,
+  TRIP_STATUS.PAID,
+];
 
 // Lugares de Medellín para simular solicitudes mientras la profesora entrega su backend
 const SAMPLE_PLACES = [
@@ -30,6 +51,7 @@ const SAMPLE_PLACES = [
 ];
 
 const PAYMENT_METHODS = ['cash', 'mercadopago'];
+const SIMULATED_TIPS = [0, 0, 1000, 2000]; // la mitad de los viajes simulados sin propina
 
 const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
@@ -80,8 +102,10 @@ export const createSimulatedTrip = async (driver) => {
     estimatedFare: estimate.fare,
     estimatedEarnings: estimate.driverEarnings,
     commissionRate: COMMISSION_RATE, // se guarda para que un cambio futuro no altere el historial
-    status: 'requested',
+    simulatedTip: pickRandom(SIMULATED_TIPS),
+    status: TRIP_STATUS.REQUESTED,
     isSimulated: true,
+    driverClosed: false,
     createdAt: serverTimestamp(),
   });
 
@@ -93,14 +117,13 @@ export const subscribeToTripRequests = (driverPhone, onChange, onError) => {
   const requestsQuery = query(
     collection(db, COLLECTION),
     where('driverId', '==', driverPhone),
-    where('status', '==', 'requested')
+    where('status', '==', TRIP_STATUS.REQUESTED)
   );
 
   return onSnapshot(
     requestsQuery,
     (snapshot) => {
       const trips = snapshot.docs.map((tripDoc) => ({ id: tripDoc.id, ...tripDoc.data() }));
-      // createdAt puede llegar vacío un instante mientras el servidor pone la fecha
       const timeOf = (trip) => trip.createdAt?.toMillis?.() ?? Date.now();
       trips.sort((a, b) => timeOf(a) - timeOf(b));
       onChange(trips);
@@ -109,21 +132,126 @@ export const subscribeToTripRequests = (driverPhone, onChange, onError) => {
   );
 };
 
-// El conductor acepta la solicitud
+// Escucha en tiempo real el viaje activo del conductor (o null si no tiene)
+export const subscribeToActiveTrip = (driverPhone, onChange, onError) => {
+  const activeQuery = query(
+    collection(db, COLLECTION),
+    where('driverId', '==', driverPhone),
+    where('status', 'in', ACTIVE_STATUSES)
+  );
+
+  return onSnapshot(
+    activeQuery,
+    (snapshot) => {
+      const trips = snapshot.docs
+        .map((tripDoc) => ({ id: tripDoc.id, ...tripDoc.data() }))
+        .filter((trip) => trip.driverClosed !== true); // el resumen ya cerrado no se muestra
+      const timeOf = (trip) => trip.acceptedAt?.toMillis?.() ?? Date.now();
+      trips.sort((a, b) => timeOf(b) - timeOf(a));
+      onChange(trips[0] ?? null);
+    },
+    onError
+  );
+};
+
+// accepted: el conductor acepta la solicitud
 export const acceptTrip = async (tripId) => {
   await updateDoc(doc(db, COLLECTION, tripId), {
-    status: 'accepted',
+    status: TRIP_STATUS.ACCEPTED,
     acceptedAt: serverTimestamp(),
   });
 };
 
-// El conductor rechaza la solicitud o se vence el tiempo (reason: 'driver' | 'timeout')
+// rejected: el conductor rechaza o se vence el tiempo (reason: 'driver' | 'timeout')
 export const rejectTrip = async (tripId, reason) => {
   await updateDoc(doc(db, COLLECTION, tripId), {
-    status: 'rejected',
+    status: TRIP_STATUS.REJECTED,
     rejectionReason: reason,
     rejectedAt: serverTimestamp(),
   });
+};
+
+// driver_arriving: el conductor va hacia el punto de recogida
+export const startPickup = async (tripId) => {
+  await updateDoc(doc(db, COLLECTION, tripId), {
+    status: TRIP_STATUS.DRIVER_ARRIVING,
+    pickupStartedAt: serverTimestamp(),
+  });
+};
+
+// in_progress: el pasajero está a bordo; se guarda la ruta para dibujarla en el historial
+export const startTrip = async (trip) => {
+  const route = await getRoute(trip.origin, trip.destination).catch(() => null);
+  await updateDoc(doc(db, COLLECTION, trip.id), {
+    status: TRIP_STATUS.IN_PROGRESS,
+    startedAt: serverTimestamp(),
+    route: route?.coordinates ?? null,
+  });
+};
+
+// completed: se calcula la tarifa final con la misma función de la estimación (enunciado, sección 4)
+export const completeTrip = async (trip) => {
+  const tip = trip.simulatedTip ?? 0;
+  const { fare, commission, driverEarnings } = calculateFare({
+    distanceKm: trip.distanceKm,
+    durationMin: trip.durationMin,
+    category: trip.category,
+    tip,
+    commissionRate: trip.commissionRate ?? COMMISSION_RATE,
+  });
+
+  await updateDoc(doc(db, COLLECTION, trip.id), {
+    status: TRIP_STATUS.COMPLETED,
+    fare,
+    commission,
+    tip,
+    driverEarnings,
+    paymentStatus: 'pending',
+    completedAt: serverTimestamp(),
+  });
+};
+
+// Calificación del pasajero simulada (4 o 5 estrellas) mientras no existe la app del pasajero
+const simulatedRating = () => 4 + Math.round(Math.random());
+
+// paid: el conductor marca el cobro en efectivo como recibido
+export const confirmCashPayment = async (tripId) => {
+  await updateDoc(doc(db, COLLECTION, tripId), {
+    status: TRIP_STATUS.PAID,
+    paymentStatus: 'cash',
+    paidAt: serverTimestamp(),
+    rating: simulatedRating(),
+  });
+};
+
+// Temporal hasta conectar Mercado Pago: simula la respuesta de la pasarela
+export const simulateOnlinePayment = async (tripId, approved) => {
+  if (!approved) {
+    await updateDoc(doc(db, COLLECTION, tripId), { paymentStatus: 'rejected' });
+    return;
+  }
+  await updateDoc(doc(db, COLLECTION, tripId), {
+    status: TRIP_STATUS.PAID,
+    paymentStatus: 'approved',
+    paymentId: `SIMULATED-${Date.now()}`,
+    paidAt: serverTimestamp(),
+    rating: simulatedRating(),
+  });
+};
+
+// cancelled: cancelado por el conductor antes de in_progress
+export const cancelTrip = async (tripId) => {
+  await updateDoc(doc(db, COLLECTION, tripId), {
+    status: TRIP_STATUS.CANCELLED,
+    cancelledBy: 'driver',
+    cancelledAt: serverTimestamp(),
+    driverClosed: true,
+  });
+};
+
+// El conductor cierra el resumen del viaje pagado
+export const closeTripSummary = async (tripId) => {
+  await updateDoc(doc(db, COLLECTION, tripId), { driverClosed: true });
 };
 
 // Borra todos los viajes de un conductor (se usa al eliminar el usuario)
