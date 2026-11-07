@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import TripRequestCard from '../components/TripRequestCard';
+import ActiveTripPanel from '../components/ActiveTripPanel';
 import useSession from '../hooks/useSession';
 import usePersistentState from '../hooks/usePersistentState';
 import useDriverLocation from '../hooks/useDriverLocation';
 import useTripRequests from '../hooks/useTripRequests';
+import useActiveTrip from '../hooks/useActiveTrip';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 import { subscribeToDriver, updateDriverAvailability } from '../services/driverService';
-import { acceptTrip, createSimulatedTrip, rejectTrip } from '../services/tripService';
+import { acceptTrip, createSimulatedTrip, rejectTrip, TRIP_STATUS } from '../services/tripService';
+import { getRoute } from '../services/osrmService';
 import { colors, radius, shadow, spacing, typography } from '../theme';
 
 // Región inicial mientras llega la ubicación: Medellín
@@ -22,18 +25,25 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.05,
 };
 
+const toLatLng = (point) => ({ latitude: point.lat, longitude: point.lng });
+
+// Espacio libre en el mapa para que la tarjeta inferior no tape la ruta
+const MAP_PADDING = { top: 80, right: 60, bottom: 440, left: 60 };
+
 export default function HomeScreen() {
   const { driverPhone } = useSession();
+  const { activeTrip, errorMessage: activeTripError } = useActiveTrip();
   const isFocused = useIsFocused(); // false cuando el conductor se va a otra opción del menú
   const insets = useSafeAreaInsets(); // espacio que ocupan la barra de navegación y la de estado
   const mapRef = useRef(null);
+  const routeKeyRef = useRef(''); // evita pedir la misma ruta a OSRM más de una vez
 
   const [driver, setDriver] = useState(null);
   const [statusError, setStatusError] = useState('');
   const [simulating, setSimulating] = useState(false);
   const [responding, setResponding] = useState(false);
-  const [acceptedTrip, setAcceptedTrip] = useState(null);
   const [tripError, setTripError] = useState('');
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
 
   // Último estado del interruptor, guardado en el celular (enunciado: AsyncStorage para preferencias)
   const {
@@ -52,10 +62,14 @@ export default function HomeScreen() {
 
   const isApproved = driver?.approvalStatus === 'approved';
 
-  // Solo se sigue la ubicación y se reciben solicitudes si está aprobado, Disponible y en Inicio
+  // Solo se sigue la ubicación si está aprobado, Disponible y con la pantalla de Inicio a la vista
   const isTracking = ready && isApproved && isAvailable && isFocused;
   const { location, permissionGranted, errorMessage } = useDriverLocation(driverPhone, isTracking);
-  const { request, errorMessage: requestsError } = useTripRequests(driverPhone, isTracking);
+  // Con un viaje activo no se reciben solicitudes nuevas
+  const { request, errorMessage: requestsError } = useTripRequests(
+    driverPhone,
+    isTracking && !activeTrip
+  );
 
   // Mantiene Firestore igual al interruptor; si la cuenta deja de estar aprobada, pasa a No disponible
   useEffect(() => {
@@ -73,9 +87,70 @@ export default function HomeScreen() {
     }
   }, [driver, ready, isApproved, isAvailable, driverPhone, setAvailable]);
 
-  // Cada vez que llega una ubicación nueva, el mapa se mueve hacia ella (si no hay solicitud a la vista)
+  // Ruta del viaje activo: se pide a OSRM una sola vez por etapa, no en cada movimiento
   useEffect(() => {
-    if (location && mapRef.current && !request) {
+    if (!activeTrip) {
+      routeKeyRef.current = '';
+      setRouteCoordinates([]);
+      return;
+    }
+
+    const goingToPickup = activeTrip.status === TRIP_STATUS.DRIVER_ARRIVING;
+    const onTrip = [TRIP_STATUS.IN_PROGRESS, TRIP_STATUS.COMPLETED, TRIP_STATUS.PAID].includes(
+      activeTrip.status
+    );
+    if (!goingToPickup && !onTrip) {
+      setRouteCoordinates([]);
+      return;
+    }
+
+    const key = `${activeTrip.id}-${goingToPickup ? 'pickup' : 'trip'}`;
+    if (routeKeyRef.current === key) return;
+
+    // Si la ruta del viaje ya está guardada en Firestore, se usa esa
+    if (onTrip && activeTrip.route) {
+      routeKeyRef.current = key;
+      setRouteCoordinates(activeTrip.route);
+      return;
+    }
+
+    // Hacia la recogida se necesita la ubicación actual del conductor
+    if (goingToPickup && !location) return;
+
+    routeKeyRef.current = key;
+    const from = goingToPickup ? { lat: location.latitude, lng: location.longitude } : activeTrip.origin;
+    const to = goingToPickup ? activeTrip.origin : activeTrip.destination;
+
+    getRoute(from, to)
+      .then((route) => {
+        if (routeKeyRef.current === key) setRouteCoordinates(route.coordinates);
+      })
+      .catch(() => {
+        // Respaldo si OSRM no responde: línea recta entre los dos puntos
+        if (routeKeyRef.current === key) setRouteCoordinates([toLatLng(from), toLatLng(to)]);
+      });
+  }, [activeTrip, location]);
+
+  // El mapa se ajusta a la ruta cuando cambia
+  useEffect(() => {
+    if (routeCoordinates.length > 1 && mapRef.current) {
+      mapRef.current.fitToCoordinates(routeCoordinates, { edgePadding: MAP_PADDING, animated: true });
+    }
+  }, [routeCoordinates]);
+
+  // Con una solicitud entrante, el mapa muestra el origen y el destino
+  useEffect(() => {
+    if (request && mapRef.current) {
+      mapRef.current.fitToCoordinates([toLatLng(request.origin), toLatLng(request.destination)], {
+        edgePadding: MAP_PADDING,
+        animated: true,
+      });
+    }
+  }, [request]);
+
+  // Sin solicitud ni viaje activo, el mapa sigue al conductor
+  useEffect(() => {
+    if (location && mapRef.current && !request && !activeTrip) {
       mapRef.current.animateToRegion(
         {
           latitude: location.latitude,
@@ -86,26 +161,12 @@ export default function HomeScreen() {
         500
       );
     }
-  }, [location, request]);
-
-  // Con una solicitud entrante, el mapa muestra el origen y el destino
-  useEffect(() => {
-    if (request && mapRef.current) {
-      mapRef.current.fitToCoordinates(
-        [
-          { latitude: request.origin.lat, longitude: request.origin.lng },
-          { latitude: request.destination.lat, longitude: request.destination.lng },
-        ],
-        { edgePadding: { top: 80, right: 60, bottom: 420, left: 60 }, animated: true }
-      );
-    }
-  }, [request]);
+  }, [location, request, activeTrip]);
 
   // Crea una solicitud de prueba (temporal, mientras llega el backend de la profesora)
   const handleSimulate = useCallback(async () => {
     if (!driver) return;
     setTripError('');
-    setAcceptedTrip(null);
     setSimulating(true);
     try {
       await createSimulatedTrip(driver);
@@ -121,8 +182,7 @@ export default function HomeScreen() {
     setTripError('');
     setResponding(true);
     try {
-      await acceptTrip(trip.id);
-      setAcceptedTrip(trip);
+      await acceptTrip(trip.id); // el panel del viaje activo aparece solo, por el contexto
     } catch (error) {
       setTripError(`No se pudo aceptar el viaje: ${error.message}`);
     } finally {
@@ -162,11 +222,14 @@ export default function HomeScreen() {
       : 'Activa el interruptor para empezar a recibir solicitudes de viaje.';
   };
 
-  const visibleError = errorMessage || statusError || requestsError || tripError;
+  // Viaje que se dibuja en el mapa: el activo o la solicitud entrante
+  const mapTrip = activeTrip ?? request;
+  const visibleError =
+    errorMessage || statusError || requestsError || tripError || activeTripError;
 
   return (
     <View style={styles.screen}>
-      {/* Mapa con la ubicación del conductor y, si hay solicitud, el origen y el destino */}
+      {/* Mapa con la ubicación del conductor, los puntos del viaje y la ruta */}
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
@@ -174,27 +237,33 @@ export default function HomeScreen() {
         showsUserLocation
         showsMyLocationButton
       >
-        {request && (
+        {mapTrip && (
           <>
             <Marker
-              coordinate={{ latitude: request.origin.lat, longitude: request.origin.lng }}
+              coordinate={toLatLng(mapTrip.origin)}
               title="Recogida"
-              description={request.origin.address}
+              description={mapTrip.origin.address}
               pinColor="green"
             />
             <Marker
-              coordinate={{ latitude: request.destination.lat, longitude: request.destination.lng }}
+              coordinate={toLatLng(mapTrip.destination)}
               title="Destino"
-              description={request.destination.address}
+              description={mapTrip.destination.address}
               pinColor="red"
             />
           </>
+        )}
+        {activeTrip && routeCoordinates.length > 1 && (
+          <Polyline coordinates={routeCoordinates} strokeColor={colors.accent} strokeWidth={5} />
         )}
       </MapView>
 
       {/* Parte inferior: se separa de la barra de botones del celular con insets.bottom */}
       <View style={[styles.bottom, { bottom: spacing.xl + insets.bottom }]}>
-        {request ? (
+        {activeTrip ? (
+          // Viaje en curso: recogida, viaje, cobro y resumen
+          <ActiveTripPanel trip={activeTrip} />
+        ) : request ? (
           // Solicitud entrante con temporizador
           <TripRequestCard
             trip={request}
@@ -204,54 +273,34 @@ export default function HomeScreen() {
             busy={responding}
           />
         ) : (
-          <>
-            {/* Aviso temporal: el viaje en curso se construye en el siguiente avance */}
-            {acceptedTrip && (
-              <View style={styles.card}>
-                <Text style={typography.subtitle}>Viaje aceptado</Text>
-                <Text style={typography.caption}>
-                  {acceptedTrip.origin.address} → {acceptedTrip.destination.address}
-                </Text>
-                <Text style={typography.caption}>
-                  La navegación del viaje en curso se agrega en el siguiente avance.
-                </Text>
-                <PrimaryButton
-                  label="Entendido"
-                  onPress={() => setAcceptedTrip(null)}
-                  variant="secondary"
-                />
-              </View>
-            )}
-
-            {/* Tarjeta de disponibilidad */}
-            <View style={styles.card}>
-              <View style={styles.row}>
-                <View style={styles.statusDot(isApproved && isAvailable)} />
-                <Text style={[typography.subtitle, styles.statusText]}>
-                  {isApproved && isAvailable ? 'Disponible' : 'No disponible'}
-                </Text>
-                <Switch
-                  value={isApproved && isAvailable}
-                  onValueChange={setAvailable}
-                  disabled={!ready || !isApproved || permissionGranted === false}
-                  trackColor={{ false: colors.border, true: colors.success }}
-                  thumbColor={colors.surface}
-                />
-              </View>
-
-              <Text style={typography.caption}>{helpText()}</Text>
-
-              {/* Botón de prueba: solo mientras está Disponible y no hay solicitud */}
-              {isTracking && (
-                <PrimaryButton
-                  label={simulating ? 'Creando solicitud...' : 'Simular solicitud'}
-                  onPress={handleSimulate}
-                  variant="secondary"
-                  disabled={simulating}
-                />
-              )}
+          // Tarjeta de disponibilidad
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.statusDot(isApproved && isAvailable)} />
+              <Text style={[typography.subtitle, styles.statusText]}>
+                {isApproved && isAvailable ? 'Disponible' : 'No disponible'}
+              </Text>
+              <Switch
+                value={isApproved && isAvailable}
+                onValueChange={setAvailable}
+                disabled={!ready || !isApproved || permissionGranted === false}
+                trackColor={{ false: colors.border, true: colors.success }}
+                thumbColor={colors.surface}
+              />
             </View>
-          </>
+
+            <Text style={typography.caption}>{helpText()}</Text>
+
+            {/* Botón de prueba: solo mientras está Disponible y no hay solicitud */}
+            {isTracking && (
+              <PrimaryButton
+                label={simulating ? 'Creando solicitud...' : 'Simular solicitud'}
+                onPress={handleSimulate}
+                variant="secondary"
+                disabled={simulating}
+              />
+            )}
+          </View>
         )}
 
         {/* Errores y avisos en pantalla, no en un Alert */}
