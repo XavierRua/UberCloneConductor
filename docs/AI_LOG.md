@@ -724,6 +724,8 @@ Archivos y commit: [c0c8d70]
 Verificación: [p. ej. con la app abierta en Expo Go se cambió el campo status de pending a approved en la consola de Firebase y la etiqueta cambió a "Aprobado" sin recargar la app]
 
 --------------------------------------------------------------------------------------------
+
+Entrada #41
 Fecha: 06-11-2026
 Integrante: Xavier Rua
 Herramienta: Claude (Anthropic)
@@ -738,3 +740,22 @@ Usado tal cual: [completar: p. ej. instalación de las librerías, GestureHandle
 Modificado / descartado: [completar, o "Nada"].
 Archivos y commit:  [720a0c6]
 Verificación: [p. ej. npx expo-doctor sin errores; el menú lateral abre con el botón y deslizando desde el borde en Expo Go]
+
+--------------------------------------------------------------------------------------------
+Entrada #42
+Fecha: Fecha: 06-11-2026
+Integrante: Xavier Rua
+Herramienta: Claude (Anthropic)
+Objetivo: Entender cómo se usan los campos isAvailable y location del conductor y qué instalan react-native-maps y expo-location.
+Prompt:
+
+como se usa isAvailable y location y que hace npx expo install react-native-maps expo-location
+
+Resumen de la respuesta: Claude explicó que isAvailable indica en Firestore si el conductor está conectado para recibir viajes y location guarda su posición actual, ambos necesarios para que la app del pasajero encuentre conductores cercanos. Indicó que react-native-maps muestra el mapa con marcadores y expo-location pide el permiso y lee el GPS. Entregó setAvailability y updateDriverLocation para el servicio de conductores, el hook useDriverLocation (sigue la ubicación cada 10 s o 20 m solo mientras el conductor está aprobado y disponible) y un ejemplo de pantalla con Switch y MapView. Enlace a la conversación: [https://claude.ai/chat/d0e7abc7-4be2-438f-aa85-14199af75145]
+Qué se usó / modificó / descartó:
+Usado tal cual: [completar: p. ej. hook useDriverLocation, funciones del servicio].
+Modificado / descartado: [completar, o "Nada"].
+Archivos y commit: [31a9371]
+Verificación: [p. ej. en Expo Go, al activar "Disponible" el mapa muestra la ubicación y en Firestore se actualizan isAvailable: true y location; al desactivarlo deja de actualizarse]
+
+--------------------------------------------------------------------------------------------
