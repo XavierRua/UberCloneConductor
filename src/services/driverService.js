@@ -1,7 +1,16 @@
 // AI-assisted: see docs/AI_LOG.md #32
 // AI-assisted: see docs/AI_LOG.md #40
+// AI-assisted: see docs/AI_LOG.md #42
 
-import { deleteDoc, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  onSnapshot,
+  setDoc,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { normalizePlate, requiresTechnicalReview } from '../utils/validators';
 import { COMMISSION_RATE } from '../config/pricing';
@@ -42,6 +51,9 @@ const buildDriverDocument = (personalData, vehicle, documents, photos) => {
     photos,
     // pending = Pendiente de aprobación; se aprueba cambiando este campo en la base de datos
     approvalStatus: 'pending',
+    // Disponibilidad y última ubicación: se actualizan desde la pantalla de Inicio
+    isAvailable: false,
+    location: null,
     createdAt: serverTimestamp(),
   };
 };
@@ -71,6 +83,22 @@ export const subscribeToDriver = (phone, onChange, onError) =>
     onError
   );
 
+// Cambia el estado Disponible / No disponible del conductor
+export const updateDriverAvailability = async (phone, isAvailable) => {
+  await updateDoc(doc(db, COLLECTION, phone), {
+    isAvailable,
+    availabilityUpdatedAt: serverTimestamp(),
+  });
+};
+
+// Guarda la última ubicación del conductor (se llama cada pocos segundos mientras está Disponible)
+export const updateDriverLocation = async (phone, { latitude, longitude }) => {
+  await updateDoc(doc(db, COLLECTION, phone), {
+    location: { lat: latitude, lng: longitude },
+    locationUpdatedAt: serverTimestamp(),
+  });
+};
+
 // AI-assisted: see docs/AI_LOG.md #23
 // Elimina al conductor y comprueba que en la base de datos no quede nada (incluidas las URL de sus fotos).
 // Las imágenes en Cloudinary solo se pueden borrar con la API Secret, que no puede ir en la app;
@@ -87,4 +115,4 @@ export const deleteDriver = async (phone) => {
 };
 
 // Servicio de conductores en Firestore: colección drivers, un documento por celular.
-// Servicio de conductores en Firestore: colección drivers, un documento por celular.
+// Cada documento tiene los datos del conductor, su vehículo, sus documentos y las URL de sus fotos en Cloudinary.
