@@ -2,10 +2,14 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
+  startAfter,
   updateDoc,
   where,
   writeBatch,
@@ -262,6 +266,54 @@ export const deleteTripsByDriver = async (driverPhone) => {
   const batch = writeBatch(db);
   snapshot.docs.forEach((tripDoc) => batch.delete(tripDoc.ref));
   await batch.commit();
+};
+
+// ---------- Historial y ganancias: see docs/AI_LOG.md #N ----------
+
+// Viajes por carga en el historial (enunciado: paginar o limitar la consulta)
+export const HISTORY_PAGE_SIZE = 20;
+
+// Un viaje por su ID (para la pantalla de detalle)
+export const getTrip = async (tripId) => {
+  const snapshot = await getDoc(doc(db, COLLECTION, tripId));
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+};
+
+// Una página del historial: viajes pagados del más reciente al más antiguo, con filtro de fechas.
+// cursor es el último documento de la página anterior (para "Cargar más").
+// Requiere el índice compuesto: driverId (asc), status (asc), completedAt (desc).
+export const getTripHistoryPage = async (driverPhone, { from = null, to = null, cursor = null } = {}) => {
+  const constraints = [
+    where('driverId', '==', driverPhone),
+    where('status', '==', TRIP_STATUS.PAID),
+  ];
+  if (from) constraints.push(where('completedAt', '>=', from));
+  if (to) constraints.push(where('completedAt', '<=', to));
+  constraints.push(orderBy('completedAt', 'desc'), limit(HISTORY_PAGE_SIZE));
+  if (cursor) constraints.push(startAfter(cursor));
+
+  const snapshot = await getDocs(query(collection(db, COLLECTION), ...constraints));
+
+  return {
+    trips: snapshot.docs.map((tripDoc) => ({ id: tripDoc.id, ...tripDoc.data() })),
+    cursor: snapshot.docs[snapshot.docs.length - 1] ?? null,
+    hasMore: snapshot.docs.length === HISTORY_PAGE_SIZE,
+  };
+};
+
+// Todos los viajes pagados del conductor, en tiempo real (para las ganancias y el saldo)
+export const subscribeToPaidTrips = (driverPhone, onChange, onError) => {
+  const paidQuery = query(
+    collection(db, COLLECTION),
+    where('driverId', '==', driverPhone),
+    where('status', '==', TRIP_STATUS.PAID)
+  );
+
+  return onSnapshot(
+    paidQuery,
+    (snapshot) => onChange(snapshot.docs.map((tripDoc) => ({ id: tripDoc.id, ...tripDoc.data() }))),
+    onError
+  );
 };
 
 
