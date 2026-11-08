@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PrimaryButton from './PrimaryButton';
 import {
@@ -12,6 +12,7 @@ import {
   startTrip,
   TRIP_STATUS,
 } from '../services/tripService';
+import { createPaymentPreference, verifyPayment } from '../services/paymentService';
 import {
   formatCOP,
   formatDistance,
@@ -55,6 +56,28 @@ export default function ActiveTripPanel({ trip }) {
       setBusy(false);
     }
   }, []);
+
+  // Pide la preferencia al backend y abre el checkout de Mercado Pago en el navegador
+  const payWithMercadoPago = useCallback(
+    () =>
+      run(async () => {
+        const { checkoutUrl } = await createPaymentPreference(trip.id);
+        await Linking.openURL(checkoutUrl);
+      }),
+    [run, trip.id]
+  );
+
+  // Le pide al backend que busque el pago en Mercado Pago (si la redirección no llegó)
+  const checkPayment = useCallback(
+    () =>
+      run(async () => {
+        const { paymentStatus } = await verifyPayment(trip.id);
+        if (paymentStatus === 'pending') {
+          setErrorMessage('Mercado Pago todavía no registra un pago aprobado para este viaje.');
+        }
+      }),
+    [run, trip.id]
+  );
 
   // Cancelar solo antes de que el pasajero esté a bordo, con confirmación
   const confirmCancel = useCallback(() => {
@@ -137,10 +160,26 @@ export default function ActiveTripPanel({ trip }) {
         />
       )}
 
-      {/* Temporal hasta conectar Mercado Pago (siguiente avance) */}
+      {/* Mercado Pago: checkout de prueba abierto en el navegador */}
       {status === TRIP_STATUS.COMPLETED && !isCash && (
         <>
-          <Text style={typography.caption}>Esperando el pago del pasajero con Mercado Pago.</Text>
+          <PrimaryButton
+            label={busy ? 'Un momento...' : 'Cobrar con Mercado Pago'}
+            onPress={payWithMercadoPago}
+            disabled={busy}
+          />
+          <Text style={typography.caption}>
+            Cuando el pasajero termine de pagar, este panel se actualiza solo. Si no cambia, verifica el pago:
+          </Text>
+          <PrimaryButton
+            label={busy ? 'Verificando...' : 'Ya pagó: verificar pago'}
+            onPress={checkPayment}
+            variant="secondary"
+            disabled={busy}
+          />
+
+          {/* Respaldo si el backend no está encendido */}
+          <Text style={typography.caption}>Sin backend, puedes simular la respuesta:</Text>
           <View style={styles.buttons}>
             <View style={styles.button}>
               <PrimaryButton
@@ -154,6 +193,7 @@ export default function ActiveTripPanel({ trip }) {
               <PrimaryButton
                 label="Simular aprobado"
                 onPress={() => run(() => simulateOnlinePayment(trip.id, true))}
+                variant="secondary"
                 disabled={busy}
               />
             </View>
@@ -196,7 +236,4 @@ const styles = StyleSheet.create({
   amountStrong: { fontWeight: '800', color: colors.success },
   buttons: { flexDirection: 'row', gap: spacing.sm },
   button: { flex: 1 },
-}); 
-
-
-// Panel del viaje activo: avanza por los estados del enunciado y muestra el cobro y el resumen.
+});
