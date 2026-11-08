@@ -1,23 +1,15 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PrimaryButton from './PrimaryButton';
-import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
-import {
-  formatCOP,
-  formatDistance,
-  formatDuration,
-  PAYMENT_METHOD_LABELS,
-} from '../utils/formatters';
+import useLanguage from '../hooks/useLanguage';
+import { formatCOP, formatDistance, formatDuration } from '../utils/formatters';
 import { colors, radius, shadow, spacing, typography } from '../theme';
 
 export const REQUEST_TIMEOUT_SECONDS = 15;
 
-// Busca el texto visible de una opción a partir de su valor
-const findLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
-
 export default function TripRequestCard({ trip, onAccept, onReject, onExpire, busy }) {
+  const { t } = useLanguage();
   const [secondsLeft, setSecondsLeft] = useState(REQUEST_TIMEOUT_SECONDS);
   const expiredRef = useRef(false);
 
@@ -49,7 +41,7 @@ export default function TripRequestCard({ trip, onAccept, onReject, onExpire, bu
     <View style={styles.card}>
       {/* Encabezado con la cuenta regresiva */}
       <View style={styles.header}>
-        <Text style={typography.subtitle}>Nueva solicitud</Text>
+        <Text style={typography.subtitle}>{t('request.title')}</Text>
         <View style={[styles.timer, isUrgent && styles.timerUrgent]}>
           <Text style={styles.timerText}>{secondsLeft} s</Text>
         </View>
@@ -77,18 +69,17 @@ export default function TripRequestCard({ trip, onAccept, onReject, onExpire, bu
       {/* Distancia, duración, categoría y método de pago */}
       <Text style={typography.caption}>
         {formatDistance(trip.distanceKm)} · {formatDuration(trip.durationMin)} ·{' '}
-        {findLabel(VEHICLE_CATEGORIES, trip.category)} ·{' '}
-        {PAYMENT_METHOD_LABELS[trip.paymentMethod] ?? trip.paymentMethod}
+        {t(`category.${trip.category}`)} · {t(`payment.method.${trip.paymentMethod}`)}
       </Text>
 
       {/* Tarifa estimada y ganancia neta estimada del conductor */}
       <View style={styles.amounts}>
         <View>
-          <Text style={typography.caption}>Tarifa estimada</Text>
+          <Text style={typography.caption}>{t('request.estimatedFare')}</Text>
           <Text style={typography.subtitle}>{formatCOP(trip.estimatedFare)}</Text>
         </View>
         <View style={styles.earnings}>
-          <Text style={typography.caption}>Tu ganancia</Text>
+          <Text style={typography.caption}>{t('request.yourEarnings')}</Text>
           <Text style={[typography.subtitle, styles.earningsText]}>
             {formatCOP(trip.estimatedEarnings)}
           </Text>
@@ -99,7 +90,7 @@ export default function TripRequestCard({ trip, onAccept, onReject, onExpire, bu
       <View style={styles.buttons}>
         <View style={styles.button}>
           <PrimaryButton
-            label="Rechazar"
+            label={t('request.reject')}
             onPress={() => onReject(trip)}
             variant="secondary"
             disabled={busy}
@@ -107,7 +98,7 @@ export default function TripRequestCard({ trip, onAccept, onReject, onExpire, bu
         </View>
         <View style={styles.button}>
           <PrimaryButton
-            label={busy ? 'Aceptando...' : 'Aceptar'}
+            label={busy ? t('request.accepting') : t('request.accept')}
             onPress={() => onAccept(trip)}
             disabled={busy}
           />
@@ -157,7 +148,3 @@ const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   button: { flex: 1 },
 });
-
-
-// Tarjeta de solicitud entrante con temporizador de 15 segundos (sección 3 del enunciado).
-// Si el tiempo llega a cero, la solicitud se rechaza automáticamente.

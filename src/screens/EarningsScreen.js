@@ -1,17 +1,11 @@
-// Ganancias (sección 5 del enunciado): totales de hoy, la semana y el mes, y el saldo del conductor
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import FilterChips from '../components/FilterChips';
 import useSession from '../hooks/useSession';
+import useLanguage from '../hooks/useLanguage';
 import useEarnings from '../hooks/useEarnings';
 import { formatCOP } from '../utils/formatters';
 import { colors, radius, spacing, typography } from '../theme';
-
-const PERIOD_OPTIONS = [
-  { value: 'today', label: 'Hoy' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-];
 
 // Fila de un total: etiqueta a la izquierda y valor a la derecha
 function TotalRow({ label, value, strong = false }) {
@@ -25,9 +19,16 @@ function TotalRow({ label, value, strong = false }) {
 
 export default function EarningsScreen() {
   const { driverPhone } = useSession();
+  const { t } = useLanguage();
   const { totals, balance, loading, errorMessage } = useEarnings(driverPhone);
   const [period, setPeriod] = useState('today');
   const selected = totals[period];
+
+  // Opciones del filtro en el idioma elegido
+  const periodOptions = useMemo(
+    () => ['today', 'week', 'month'].map((value) => ({ value, label: t(`periods.${value}`) })),
+    [t]
+  );
 
   if (loading) {
     return (
@@ -43,26 +44,23 @@ export default function EarningsScreen() {
 
       {/* Saldo: lo que la plataforma le debe al conductor (o al revés, si es negativo) */}
       <View style={styles.card}>
-        <Text style={typography.caption}>Saldo</Text>
+        <Text style={typography.caption}>{t('earnings.balance')}</Text>
         <Text style={[styles.balance, { color: balance >= 0 ? colors.success : colors.danger }]}>
           {balance < 0 ? `- ${formatCOP(-balance)}` : formatCOP(balance)}
         </Text>
-        <Text style={typography.caption}>
-          Ganancias de los viajes pagados con Mercado Pago menos las comisiones de los viajes en
-          efectivo.
-        </Text>
+        <Text style={typography.caption}>{t('earnings.balanceHint')}</Text>
       </View>
 
-      <FilterChips options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
+      <FilterChips options={periodOptions} value={period} onChange={setPeriod} />
 
       {/* Totales del periodo elegido */}
       <View style={styles.card}>
-        <TotalRow label="Viajes" value={String(selected.trips)} />
-        <TotalRow label="Total facturado" value={formatCOP(selected.billed)} />
-        <TotalRow label="Comisiones" value={`- ${formatCOP(selected.commissions)}`} />
-        <TotalRow label="Propinas" value={formatCOP(selected.tips)} />
-        <TotalRow label="Ganancia neta" value={formatCOP(selected.net)} strong />
-        <TotalRow label="Promedio por viaje" value={formatCOP(selected.average)} />
+        <TotalRow label={t('earnings.trips')} value={String(selected.trips)} />
+        <TotalRow label={t('earnings.billed')} value={formatCOP(selected.billed)} />
+        <TotalRow label={t('earnings.commissions')} value={`- ${formatCOP(selected.commissions)}`} />
+        <TotalRow label={t('earnings.tips')} value={formatCOP(selected.tips)} />
+        <TotalRow label={t('earnings.net')} value={formatCOP(selected.net)} strong />
+        <TotalRow label={t('earnings.average')} value={formatCOP(selected.average)} />
       </View>
     </ScrollView>
   );

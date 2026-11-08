@@ -5,46 +5,31 @@ import FilterChips from '../components/FilterChips';
 import DateField from '../components/DateField';
 import PrimaryButton from '../components/PrimaryButton';
 import useSession from '../hooks/useSession';
+import useLanguage from '../hooks/useLanguage';
 import { getTripHistoryPage } from '../services/tripService';
-import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
 import { endOfDay, formatDateTime, getPeriodRange, startOfDay } from '../utils/dateRanges';
-import { formatCOP, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../utils/formatters';
+import { formatCOP } from '../utils/formatters';
 import { colors, radius, spacing, typography } from '../theme';
-
-const PERIOD_OPTIONS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'today', label: 'Hoy' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'range', label: 'Rango de fechas' },
-];
-
-const PAYMENT_OPTIONS = [
-  { value: 'all', label: 'Todos los pagos' },
-  { value: 'cash', label: 'Efectivo' },
-  { value: 'mercadopago', label: 'Mercado Pago' },
-];
-
-// Busca el texto visible de una opción a partir de su valor
-const findLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
 
 // Un viaje de la lista
 function TripItem({ trip, onPress }) {
+  const { t } = useLanguage();
+
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}>
       <View style={styles.itemHeader}>
         <Text style={typography.caption}>{formatDateTime(trip.completedAt?.toDate?.())}</Text>
         <Text style={typography.caption}>
-          {PAYMENT_STATUS_LABELS[trip.paymentStatus] ?? trip.paymentStatus}
+          {trip.paymentStatus ? t(`payment.status.${trip.paymentStatus}`) : ''}
         </Text>
       </View>
       <Text style={typography.body} numberOfLines={2}>
         {trip.origin.address} → {trip.destination.address}
       </Text>
       <View style={styles.itemFooter}>
-        <Text style={typography.caption}>
-          {findLabel(VEHICLE_CATEGORIES, trip.category)} ·{' '}
-          {PAYMENT_METHOD_LABELS[trip.paymentMethod] ?? trip.paymentMethod} · Tarifa {formatCOP(trip.fare)}
+        <Text style={[typography.caption, styles.itemInfo]}>
+          {t(`category.${trip.category}`)} · {t(`payment.method.${trip.paymentMethod}`)} ·{' '}
+          {t('history.fare', { amount: formatCOP(trip.fare) })}
         </Text>
         <Text style={styles.itemEarnings}>{formatCOP(trip.driverEarnings)}</Text>
       </View>
@@ -56,6 +41,7 @@ export default function HistoryScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const { driverPhone } = useSession();
+  const { t } = useLanguage();
 
   const [period, setPeriod] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
@@ -67,6 +53,20 @@ export default function HistoryScreen() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Opciones de los filtros en el idioma elegido
+  const periodOptions = useMemo(
+    () => ['all', 'today', 'week', 'month', 'range'].map((value) => ({ value, label: t(`periods.${value}`) })),
+    [t]
+  );
+  const paymentOptions = useMemo(
+    () => [
+      { value: 'all', label: t('history.allPayments') },
+      { value: 'cash', label: t('payment.method.cash') },
+      { value: 'mercadopago', label: t('payment.method.mercadopago') },
+    ],
+    [t]
+  );
 
   // Fechas del filtro elegido
   const dateRange = useMemo(() => {
@@ -94,7 +94,7 @@ export default function HistoryScreen() {
         setHasMore(page.hasMore);
       })
       .catch((error) => {
-        if (active) setErrorMessage(`No se pudo cargar el historial: ${error.message}`);
+        if (active) setErrorMessage(t('history.loadError', { message: error.message }));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -104,7 +104,7 @@ export default function HistoryScreen() {
     return () => {
       active = false;
     };
-  }, [isFocused, driverPhone, dateRange]);
+  }, [isFocused, driverPhone, dateRange, t]);
 
   // Siguiente página de 20 viajes
   const loadMore = useCallback(async () => {
@@ -116,11 +116,11 @@ export default function HistoryScreen() {
       setCursor(page.cursor);
       setHasMore(page.hasMore);
     } catch (error) {
-      setErrorMessage(`No se pudieron cargar más viajes: ${error.message}`);
+      setErrorMessage(t('history.loadMoreError', { message: error.message }));
     } finally {
       setLoading(false);
     }
-  }, [loading, hasMore, cursor, driverPhone, dateRange]);
+  }, [loading, hasMore, cursor, driverPhone, dateRange, t]);
 
   // Filtro por método de pago sobre los viajes cargados
   const visibleTrips = useMemo(
@@ -144,21 +144,35 @@ export default function HistoryScreen() {
       onEndReachedThreshold={0.3}
       ListHeaderComponent={
         <View style={styles.filters}>
-          <FilterChips options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
+          <FilterChips options={periodOptions} value={period} onChange={setPeriod} />
 
           {/* Rango de fechas: solo cuando se elige ese filtro */}
           {period === 'range' && (
             <View style={styles.rangeRow}>
               <View style={styles.rangeField}>
-                <DateField label="Desde" value={rangeFrom} onChange={setRangeFrom} maximumDate={new Date()} />
+                <DateField
+                  label={t('history.from')}
+                  value={rangeFrom}
+                  onChange={setRangeFrom}
+                  maximumDate={new Date()}
+                  placeholder={t('common.selectDate')}
+                  doneLabel={t('common.done')}
+                />
               </View>
               <View style={styles.rangeField}>
-                <DateField label="Hasta" value={rangeTo} onChange={setRangeTo} maximumDate={new Date()} />
+                <DateField
+                  label={t('history.to')}
+                  value={rangeTo}
+                  onChange={setRangeTo}
+                  maximumDate={new Date()}
+                  placeholder={t('common.selectDate')}
+                  doneLabel={t('common.done')}
+                />
               </View>
             </View>
           )}
 
-          <FilterChips options={PAYMENT_OPTIONS} value={paymentFilter} onChange={setPaymentFilter} />
+          <FilterChips options={paymentOptions} value={paymentFilter} onChange={setPaymentFilter} />
 
           {errorMessage !== '' && <Text style={typography.error}>{errorMessage}</Text>}
         </View>
@@ -166,7 +180,7 @@ export default function HistoryScreen() {
       ListEmptyComponent={
         !loading && errorMessage === '' ? (
           // Mensaje vacío en lugar de una lista en blanco (enunciado)
-          <Text style={[typography.caption, styles.empty]}>No tienes viajes en el filtro elegido.</Text>
+          <Text style={[typography.caption, styles.empty]}>{t('history.empty')}</Text>
         ) : null
       }
       ListFooterComponent={
@@ -174,7 +188,7 @@ export default function HistoryScreen() {
           <ActivityIndicator style={styles.footer} color={colors.primary} />
         ) : hasMore ? (
           <View style={styles.footer}>
-            <PrimaryButton label="Cargar más" onPress={loadMore} variant="secondary" />
+            <PrimaryButton label={t('history.loadMore')} onPress={loadMore} variant="secondary" />
           </View>
         ) : null
       }
@@ -199,6 +213,7 @@ const styles = StyleSheet.create({
   itemPressed: { opacity: 0.7 },
   itemHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   itemFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  itemInfo: { flex: 1 },
   itemEarnings: { fontSize: 15, fontWeight: '800', color: colors.success },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   footer: { marginTop: spacing.md },

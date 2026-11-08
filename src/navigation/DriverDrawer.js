@@ -1,4 +1,3 @@
-// Menú lateral (Drawer) del conductor con sesión: Inicio, perfil, historial, ganancias y configuración
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
@@ -6,6 +5,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import EarningsScreen from '../screens/EarningsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import useLanguage from '../hooks/useLanguage';
 import { colors } from '../theme';
 
 const Drawer = createDrawerNavigator();
@@ -20,6 +20,8 @@ const DRAWER_ICONS = {
 };
 
 export default function DriverDrawer() {
+  const { t } = useLanguage();
+
   return (
     <Drawer.Navigator
       screenOptions={({ route }) => ({
@@ -30,11 +32,11 @@ export default function DriverDrawer() {
         ),
       })}
     >
-      <Drawer.Screen name="Home" component={HomeScreen} options={{ title: 'Inicio' }} />
-      <Drawer.Screen name="Profile" component={ProfileScreen} options={{ title: 'Mi perfil' }} />
-      <Drawer.Screen name="History" component={HistoryScreen} options={{ title: 'Historial' }} />
-      <Drawer.Screen name="Earnings" component={EarningsScreen} options={{ title: 'Ganancias' }} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configuración' }} />
+      <Drawer.Screen name="Home" component={HomeScreen} options={{ title: t('menu.home') }} />
+      <Drawer.Screen name="Profile" component={ProfileScreen} options={{ title: t('menu.profile') }} />
+      <Drawer.Screen name="History" component={HistoryScreen} options={{ title: t('menu.history') }} />
+      <Drawer.Screen name="Earnings" component={EarningsScreen} options={{ title: t('menu.earnings') }} />
+      <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: t('menu.settings') }} />
     </Drawer.Navigator>
   );
 }

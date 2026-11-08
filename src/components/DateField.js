@@ -4,7 +4,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, radius, spacing, typography } from '../theme';
 
 // Muestra la fecha como dd/mm/aaaa
-// AI-assisted: see docs/AI_LOG.md #27
 const formatDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -20,6 +19,8 @@ export default function DateField({
   minimumDate,
   maximumDate,
   defaultDate,
+  placeholder = 'Seleccionar fecha',
+  doneLabel = 'Listo',
 }) {
   const [visible, setVisible] = useState(false);
   const hasError = showError && Boolean(error);
@@ -35,7 +36,7 @@ export default function DateField({
       <Text style={typography.label}>{label}</Text>
       <Pressable style={[styles.box, hasError && styles.boxError]} onPress={() => setVisible(true)}>
         <Text style={value ? typography.body : styles.placeholder}>
-          {value ? formatDate(value) : 'Seleccionar fecha'}
+          {value ? formatDate(value) : placeholder}
         </Text>
       </Pressable>
 
@@ -54,7 +55,7 @@ export default function DateField({
       {/* En iOS el calendario queda abierto hasta tocar Listo */}
       {visible && Platform.OS === 'ios' && (
         <Pressable style={styles.doneButton} onPress={() => setVisible(false)}>
-          <Text style={styles.doneText}>Listo</Text>
+          <Text style={styles.doneText}>{doneLabel}</Text>
         </Pressable>
       )}
 
@@ -78,5 +79,3 @@ const styles = StyleSheet.create({
   doneButton: { alignSelf: 'flex-end', paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   doneText: { color: colors.accent, fontWeight: '700' },
 });
-
-// Selector de fecha reutilizable con etiqueta y mensaje de error debajo

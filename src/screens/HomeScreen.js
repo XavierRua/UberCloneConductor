@@ -7,6 +7,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import TripRequestCard from '../components/TripRequestCard';
 import ActiveTripPanel from '../components/ActiveTripPanel';
 import useSession from '../hooks/useSession';
+import useLanguage from '../hooks/useLanguage';
 import usePersistentState from '../hooks/usePersistentState';
 import useDriverLocation from '../hooks/useDriverLocation';
 import useTripRequests from '../hooks/useTripRequests';
@@ -32,6 +33,7 @@ const MAP_PADDING = { top: 80, right: 60, bottom: 440, left: 60 };
 
 export default function HomeScreen() {
   const { driverPhone } = useSession();
+  const { t } = useLanguage();
   const { activeTrip, errorMessage: activeTripError } = useActiveTrip();
   const isFocused = useIsFocused(); // false cuando el conductor se va a otra opción del menú
   const insets = useSafeAreaInsets(); // espacio que ocupan la barra de navegación y la de estado
@@ -203,23 +205,24 @@ export default function HomeScreen() {
   }, []);
 
   // Si se vencen los 15 segundos, la solicitud se rechaza automáticamente
-  const handleExpire = useCallback(async (trip) => {
-    try {
-      await rejectTrip(trip.id, 'timeout');
-      setTripError('La solicitud se rechazó automáticamente porque se acabó el tiempo.');
-    } catch (error) {
-      setTripError(`No se pudo rechazar el viaje: ${error.message}`);
-    }
-  }, []);
+  const handleExpire = useCallback(
+    async (trip) => {
+      try {
+        await rejectTrip(trip.id, 'timeout');
+        setTripError(t('home.autoRejected'));
+      } catch (error) {
+        setTripError(`No se pudo rechazar el viaje: ${error.message}`);
+      }
+    },
+    [t]
+  );
 
   // Texto de ayuda debajo del interruptor
   const helpText = () => {
-    if (!driver) return 'Cargando el estado de tu cuenta...';
-    if (!isApproved) return 'Tu cuenta está pendiente de aprobación. Aún no puedes ponerte Disponible.';
-    if (permissionGranted === false) return 'Activa el permiso de ubicación para poder recibir viajes.';
-    return isAvailable
-      ? 'Estás recibiendo solicitudes. Tu ubicación se actualiza cada pocos segundos.'
-      : 'Activa el interruptor para empezar a recibir solicitudes de viaje.';
+    if (!driver) return t('home.loadingAccount');
+    if (!isApproved) return t('home.pendingApproval');
+    if (permissionGranted === false) return t('home.needLocation');
+    return isAvailable ? t('home.receiving') : t('home.turnOn');
   };
 
   // Viaje que se dibuja en el mapa: el activo o la solicitud entrante
@@ -241,13 +244,13 @@ export default function HomeScreen() {
           <>
             <Marker
               coordinate={toLatLng(mapTrip.origin)}
-              title="Recogida"
+              title={t('home.pickup')}
               description={mapTrip.origin.address}
               pinColor="green"
             />
             <Marker
               coordinate={toLatLng(mapTrip.destination)}
-              title="Destino"
+              title={t('home.destination')}
               description={mapTrip.destination.address}
               pinColor="red"
             />
@@ -278,7 +281,7 @@ export default function HomeScreen() {
             <View style={styles.row}>
               <View style={styles.statusDot(isApproved && isAvailable)} />
               <Text style={[typography.subtitle, styles.statusText]}>
-                {isApproved && isAvailable ? 'Disponible' : 'No disponible'}
+                {isApproved && isAvailable ? t('home.available') : t('home.unavailable')}
               </Text>
               <Switch
                 value={isApproved && isAvailable}
@@ -294,7 +297,7 @@ export default function HomeScreen() {
             {/* Botón de prueba: solo mientras está Disponible y no hay solicitud */}
             {isTracking && (
               <PrimaryButton
-                label={simulating ? 'Creando solicitud...' : 'Simular solicitud'}
+                label={simulating ? t('home.simulating') : t('home.simulate')}
                 onPress={handleSimulate}
                 variant="secondary"
                 disabled={simulating}

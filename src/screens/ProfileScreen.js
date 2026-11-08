@@ -6,28 +6,16 @@ import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } f
 import { Ionicons } from '@expo/vector-icons';
 import PrimaryButton from '../components/PrimaryButton';
 import useSession from '../hooks/useSession';
+import useLanguage from '../hooks/useLanguage';
 import { deleteDriver, subscribeToDriver } from '../services/driverService';
-import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
 import { colors, radius, spacing, typography } from '../theme';
 
-const APPROVAL_LABELS = {
-  pending: 'Pendiente de aprobación',
-  approved: 'Aprobado',
-};
-
-// Nombre visible de cada foto de documentos
-const PHOTO_LABELS = {
-  vehicle: 'Vehículo',
-  license: 'Licencia',
-  soat: 'SOAT',
-  technicalReview: 'Revisión técnico-mecánica',
-};
-
-// Busca el texto visible de una opción a partir de su valor
-const findLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
+// Fotos de documentos que se muestran como miniaturas (la foto de perfil va aparte)
+const DOCUMENT_PHOTOS = ['vehicle', 'license', 'soat', 'technicalReview'];
 
 export default function ProfileScreen() {
   const { driverPhone, endSession } = useSession();
+  const { t } = useLanguage();
   const [driver, setDriver] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -42,14 +30,14 @@ export default function ProfileScreen() {
         setLoading(false);
       },
       (error) => {
-        setErrorMessage(`No se pudieron cargar los datos: ${error.message}`);
+        setErrorMessage(t('profile.loadError', { message: error.message }));
         setLoading(false);
       }
     );
 
     // Función de limpieza: deja de escuchar cuando la pantalla se cierra o cambia el celular
     return unsubscribe;
-  }, [driverPhone]);
+  }, [driverPhone, t]);
 
   // Borra el conductor de Firestore y cierra la sesión
   const removeDriver = useCallback(async () => {
@@ -57,24 +45,20 @@ export default function ProfileScreen() {
     setDeleting(true);
     try {
       await deleteDriver(driverPhone);
-      await endSession(); // al no haber sesión, la app vuelve al registro
+      await endSession(); // al no haber sesión, la app vuelve a Iniciar sesión
     } catch (error) {
-      setErrorMessage(`No se pudo eliminar el usuario: ${error.message}`);
+      setErrorMessage(t('profile.deleteError', { message: error.message }));
       setDeleting(false);
     }
-  }, [driverPhone, endSession]);
+  }, [driverPhone, endSession, t]);
 
   // Pide confirmación antes de borrar: la acción no se puede deshacer
   const confirmDelete = useCallback(() => {
-    Alert.alert(
-      'Eliminar usuario',
-      `Se borrarán todos los datos del conductor con celular ${driverPhone}. Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: removeDriver },
-      ]
-    );
-  }, [driverPhone, removeDriver]);
+    Alert.alert(t('profile.delete'), t('profile.deleteConfirm', { phone: driverPhone }), [
+      { text: t('profile.cancel'), style: 'cancel' },
+      { text: t('profile.deleteAction'), style: 'destructive', onPress: removeDriver },
+    ]);
+  }, [driverPhone, removeDriver, t]);
 
   if (loading) {
     return (
@@ -87,7 +71,7 @@ export default function ProfileScreen() {
   const isApproved = driver?.approvalStatus === 'approved';
   const photos = driver?.photos ?? {};
   // Fotos de documentos que existen (la revisión técnico-mecánica puede no estar)
-  const documentPhotos = Object.entries(PHOTO_LABELS).filter(([key]) => photos[key]?.url);
+  const documentPhotos = DOCUMENT_PHOTOS.filter((key) => photos[key]?.url);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -95,7 +79,7 @@ export default function ProfileScreen() {
 
       {/* Si el documento ya no existe en Firestore (por ejemplo, se borró desde la consola) */}
       {!driver && errorMessage === '' && !deleting && (
-        <Text style={typography.body}>No se encontró un conductor con el celular {driverPhone}.</Text>
+        <Text style={typography.body}>{t('profile.notFound', { phone: driverPhone })}</Text>
       )}
 
       {driver && (
@@ -110,9 +94,12 @@ export default function ProfileScreen() {
           )}
 
           <Text style={typography.title}>{driver.fullName}</Text>
-          <Text style={typography.caption}>Celular: {driver.phone}</Text>
+          <Text style={typography.caption}>{t('profile.phone', { phone: driver.phone })}</Text>
           <Text style={typography.caption}>
-            Vehículo: {findLabel(VEHICLE_CATEGORIES, driver.vehicle.category)} · {driver.vehicle.plate}
+            {t('profile.vehicle', {
+              category: t(`category.${driver.vehicle.category}`),
+              plate: driver.vehicle.plate,
+            })}
           </Text>
 
           {/* Estado de la cuenta: cambia en vivo cuando se aprueba en Firebase */}
@@ -120,14 +107,12 @@ export default function ProfileScreen() {
             style={[styles.badge, { backgroundColor: isApproved ? colors.success : colors.warning }]}
           >
             <Text style={[styles.badgeText, isApproved && styles.badgeTextApproved]}>
-              {APPROVAL_LABELS[driver.approvalStatus] ?? driver.approvalStatus}
+              {t(`profile.approval.${driver.approvalStatus}`)}
             </Text>
           </View>
 
           <Text style={typography.caption}>
-            {isApproved
-              ? 'Tu cuenta fue aprobada. Ya puedes ponerte Disponible para recibir viajes.'
-              : 'Tu cuenta está en revisión. No podrás ponerte Disponible hasta que sea aprobada.'}
+            {isApproved ? t('profile.approvedText') : t('profile.pendingText')}
           </Text>
         </View>
       )}
@@ -135,23 +120,28 @@ export default function ProfileScreen() {
       {/* Miniaturas de las fotos del vehículo y de los documentos */}
       {documentPhotos.length > 0 && (
         <View style={styles.card}>
-          <Text style={typography.subtitle}>Documentos</Text>
+          <Text style={typography.subtitle}>{t('profile.documentsTitle')}</Text>
           <View style={styles.photoGrid}>
-            {documentPhotos.map(([key, label]) => (
+            {documentPhotos.map((key) => (
               <View key={key} style={styles.photoItem}>
                 <Image source={{ uri: photos[key].url }} style={styles.thumbnail} />
-                <Text style={typography.caption}>{label}</Text>
+                <Text style={typography.caption}>{t(`profile.photos.${key}`)}</Text>
               </View>
             ))}
           </View>
         </View>
       )}
 
-      <PrimaryButton label="Cerrar sesión" onPress={endSession} variant="secondary" disabled={deleting} />
+      <PrimaryButton
+        label={t('profile.logout')}
+        onPress={endSession}
+        variant="secondary"
+        disabled={deleting}
+      />
 
       {/* Borra al conductor de la base de datos (requisito de la primera entrega) */}
       <PrimaryButton
-        label={deleting ? 'Eliminando...' : 'Eliminar usuario'}
+        label={deleting ? t('profile.deleting') : t('profile.delete')}
         onPress={confirmDelete}
         variant="danger"
         disabled={deleting}
@@ -187,8 +177,3 @@ const styles = StyleSheet.create({
   photoItem: { width: '46%', gap: spacing.xs },
   thumbnail: { width: '100%', height: 90, borderRadius: radius.sm, backgroundColor: colors.primarySoft },
 });
-
-// modificaciones al archivo: 
-// Perfil del conductor: lee sus datos desde Firestore. En el avance 12 se agrega Eliminar usuario.
-// Eliminar usuario
-// Actualización en tiempo real con onSnapshot

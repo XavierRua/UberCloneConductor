@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PrimaryButton from './PrimaryButton';
+import useLanguage from '../hooks/useLanguage';
 import {
   cancelTrip,
   closeTripSummary,
@@ -13,22 +14,8 @@ import {
   TRIP_STATUS,
 } from '../services/tripService';
 import { createPaymentPreference, verifyPayment } from '../services/paymentService';
-import {
-  formatCOP,
-  formatDistance,
-  formatDuration,
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_STATUS_LABELS,
-} from '../utils/formatters';
+import { formatCOP, formatDistance, formatDuration } from '../utils/formatters';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-
-const STATUS_TITLES = {
-  [TRIP_STATUS.ACCEPTED]: 'Viaje aceptado',
-  [TRIP_STATUS.DRIVER_ARRIVING]: 'Rumbo a la recogida',
-  [TRIP_STATUS.IN_PROGRESS]: 'Viaje en curso',
-  [TRIP_STATUS.COMPLETED]: 'Cobro del viaje',
-  [TRIP_STATUS.PAID]: 'Resumen del viaje',
-};
 
 // Fila de un valor del cobro: etiqueta a la izquierda y monto a la derecha
 function AmountRow({ label, value, strong = false }) {
@@ -41,21 +28,25 @@ function AmountRow({ label, value, strong = false }) {
 }
 
 export default function ActiveTripPanel({ trip }) {
+  const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   // Ejecuta una acción del viaje mostrando el estado de carga y el error en pantalla
-  const run = useCallback(async (action) => {
-    setErrorMessage('');
-    setBusy(true);
-    try {
-      await action();
-    } catch (error) {
-      setErrorMessage(`No se pudo completar la acción: ${error.message}`);
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const run = useCallback(
+    async (action) => {
+      setErrorMessage('');
+      setBusy(true);
+      try {
+        await action();
+      } catch (error) {
+        setErrorMessage(t('trip.actionError', { message: error.message }));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [t]
+  );
 
   // Pide la preferencia al backend y abre el checkout de Mercado Pago en el navegador
   const payWithMercadoPago = useCallback(
@@ -73,29 +64,30 @@ export default function ActiveTripPanel({ trip }) {
       run(async () => {
         const { paymentStatus } = await verifyPayment(trip.id);
         if (paymentStatus === 'pending') {
-          setErrorMessage('Mercado Pago todavía no registra un pago aprobado para este viaje.');
+          setErrorMessage(t('trip.noApprovedPayment'));
         }
       }),
-    [run, trip.id]
+    [run, trip.id, t]
   );
 
   // Cancelar solo antes de que el pasajero esté a bordo, con confirmación
   const confirmCancel = useCallback(() => {
-    Alert.alert('Cancelar viaje', '¿Seguro que quieres cancelar este viaje?', [
-      { text: 'No', style: 'cancel' },
-      { text: 'Sí, cancelar', style: 'destructive', onPress: () => run(() => cancelTrip(trip.id)) },
+    Alert.alert(t('trip.cancelTrip'), t('trip.cancelConfirm'), [
+      { text: t('trip.no'), style: 'cancel' },
+      { text: t('trip.yesCancel'), style: 'destructive', onPress: () => run(() => cancelTrip(trip.id)) },
     ]);
-  }, [run, trip.id]);
+  }, [run, trip.id, t]);
 
   const { status } = trip;
   const isCash = trip.paymentMethod === 'cash';
   const canCancel = status === TRIP_STATUS.ACCEPTED || status === TRIP_STATUS.DRIVER_ARRIVING;
   const showAmounts = status === TRIP_STATUS.COMPLETED || status === TRIP_STATUS.PAID;
   const commissionPercent = Math.round((trip.commissionRate ?? 0.2) * 100);
+  const loadingLabel = t('trip.oneMoment');
 
   return (
     <View style={styles.card}>
-      <Text style={typography.subtitle}>{STATUS_TITLES[status] ?? 'Viaje'}</Text>
+      <Text style={typography.subtitle}>{t(`trip.status.${status}`)}</Text>
 
       {/* Origen y destino */}
       <View style={styles.place}>
@@ -108,19 +100,22 @@ export default function ActiveTripPanel({ trip }) {
       </View>
       <Text style={typography.caption}>
         {formatDistance(trip.distanceKm)} · {formatDuration(trip.durationMin)} ·{' '}
-        {PAYMENT_METHOD_LABELS[trip.paymentMethod] ?? trip.paymentMethod}
+        {t(`payment.method.${trip.paymentMethod}`)}
       </Text>
 
       {/* Cobro: tarifa final, comisión, propina, ganancia neta y estado del pago */}
       {showAmounts && (
         <View style={styles.amounts}>
-          <AmountRow label="Tarifa final" value={formatCOP(trip.fare)} />
-          <AmountRow label={`Comisión (${commissionPercent} %)`} value={`- ${formatCOP(trip.commission)}`} />
-          <AmountRow label="Propina" value={formatCOP(trip.tip)} />
-          <AmountRow label="Tu ganancia neta" value={formatCOP(trip.driverEarnings)} strong />
+          <AmountRow label={t('trip.finalFare')} value={formatCOP(trip.fare)} />
           <AmountRow
-            label="Estado del pago"
-            value={PAYMENT_STATUS_LABELS[trip.paymentStatus] ?? trip.paymentStatus}
+            label={t('trip.commission', { percent: commissionPercent })}
+            value={`- ${formatCOP(trip.commission)}`}
+          />
+          <AmountRow label={t('trip.tip')} value={formatCOP(trip.tip)} />
+          <AmountRow label={t('trip.netEarnings')} value={formatCOP(trip.driverEarnings)} strong />
+          <AmountRow
+            label={t('trip.paymentStatus')}
+            value={trip.paymentStatus ? t(`payment.status.${trip.paymentStatus}`) : ''}
           />
         </View>
       )}
@@ -130,7 +125,7 @@ export default function ActiveTripPanel({ trip }) {
       {/* Acción principal según el estado del viaje */}
       {status === TRIP_STATUS.ACCEPTED && (
         <PrimaryButton
-          label={busy ? 'Un momento...' : 'Ir a recoger al pasajero'}
+          label={busy ? loadingLabel : t('trip.goToPickup')}
           onPress={() => run(() => startPickup(trip.id))}
           disabled={busy}
         />
@@ -138,7 +133,7 @@ export default function ActiveTripPanel({ trip }) {
 
       {status === TRIP_STATUS.DRIVER_ARRIVING && (
         <PrimaryButton
-          label={busy ? 'Un momento...' : 'Pasajero a bordo'}
+          label={busy ? loadingLabel : t('trip.passengerOnBoard')}
           onPress={() => run(() => startTrip(trip))}
           disabled={busy}
         />
@@ -146,7 +141,7 @@ export default function ActiveTripPanel({ trip }) {
 
       {status === TRIP_STATUS.IN_PROGRESS && (
         <PrimaryButton
-          label={busy ? 'Calculando la tarifa...' : 'Finalizar viaje'}
+          label={busy ? t('trip.calculating') : t('trip.finish')}
           onPress={() => run(() => completeTrip(trip))}
           disabled={busy}
         />
@@ -154,7 +149,7 @@ export default function ActiveTripPanel({ trip }) {
 
       {status === TRIP_STATUS.COMPLETED && isCash && (
         <PrimaryButton
-          label={busy ? 'Un momento...' : 'Confirmar pago en efectivo recibido'}
+          label={busy ? loadingLabel : t('trip.confirmCash')}
           onPress={() => run(() => confirmCashPayment(trip.id))}
           disabled={busy}
         />
@@ -164,26 +159,24 @@ export default function ActiveTripPanel({ trip }) {
       {status === TRIP_STATUS.COMPLETED && !isCash && (
         <>
           <PrimaryButton
-            label={busy ? 'Un momento...' : 'Cobrar con Mercado Pago'}
+            label={busy ? loadingLabel : t('trip.payWithMp')}
             onPress={payWithMercadoPago}
             disabled={busy}
           />
-          <Text style={typography.caption}>
-            Cuando el pasajero termine de pagar, este panel se actualiza solo. Si no cambia, verifica el pago:
-          </Text>
+          <Text style={typography.caption}>{t('trip.mpHint')}</Text>
           <PrimaryButton
-            label={busy ? 'Verificando...' : 'Ya pagó: verificar pago'}
+            label={busy ? t('trip.verifying') : t('trip.verify')}
             onPress={checkPayment}
             variant="secondary"
             disabled={busy}
           />
 
           {/* Respaldo si el backend no está encendido */}
-          <Text style={typography.caption}>Sin backend, puedes simular la respuesta:</Text>
+          <Text style={typography.caption}>{t('trip.simulateHint')}</Text>
           <View style={styles.buttons}>
             <View style={styles.button}>
               <PrimaryButton
-                label="Simular rechazo"
+                label={t('trip.simulateReject')}
                 onPress={() => run(() => simulateOnlinePayment(trip.id, false))}
                 variant="secondary"
                 disabled={busy}
@@ -191,7 +184,7 @@ export default function ActiveTripPanel({ trip }) {
             </View>
             <View style={styles.button}>
               <PrimaryButton
-                label="Simular aprobado"
+                label={t('trip.simulateApprove')}
                 onPress={() => run(() => simulateOnlinePayment(trip.id, true))}
                 variant="secondary"
                 disabled={busy}
@@ -203,14 +196,19 @@ export default function ActiveTripPanel({ trip }) {
 
       {status === TRIP_STATUS.PAID && (
         <PrimaryButton
-          label="Listo"
+          label={t('trip.done')}
           onPress={() => run(() => closeTripSummary(trip.id))}
           disabled={busy}
         />
       )}
 
       {canCancel && (
-        <PrimaryButton label="Cancelar viaje" onPress={confirmCancel} variant="secondary" disabled={busy} />
+        <PrimaryButton
+          label={t('trip.cancelTrip')}
+          onPress={confirmCancel}
+          variant="secondary"
+          disabled={busy}
+        />
       )}
     </View>
   );

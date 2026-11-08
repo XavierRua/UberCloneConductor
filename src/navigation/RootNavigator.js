@@ -1,7 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #22
-// Navegación principal: sin sesión, Iniciar sesión y Registro; con sesión, el menú lateral del conductor
-// Iniciar sesión y Drawer: see docs/AI_LOG.md #N
-// Detalle del viaje: see docs/AI_LOG.md #N
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
@@ -9,12 +5,14 @@ import TripDetailScreen from '../screens/TripDetailScreen';
 import RegisterTabs from './RegisterTabs';
 import DriverDrawer from './DriverDrawer';
 import useSession from '../hooks/useSession';
+import useLanguage from '../hooks/useLanguage';
 import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { driverPhone, ready } = useSession();
+  const { t } = useLanguage();
 
   // Mientras se lee la sesión guardada en el celular
   if (!ready) {
@@ -34,16 +32,16 @@ export default function RootNavigator() {
           <Stack.Screen
             name="TripDetail"
             component={TripDetailScreen}
-            options={{ title: 'Detalle del viaje' }}
+            options={{ title: t('screens.tripDetail') }}
           />
         </>
       ) : (
         <>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar sesión' }} />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: t('screens.login') }} />
           <Stack.Screen
             name="Register"
             component={RegisterTabs}
-            options={{ title: 'Registro de conductor' }}
+            options={{ title: t('screens.register') }}
           />
         </>
       )}
