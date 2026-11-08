@@ -1,21 +1,13 @@
-// Detalle de un viaje: ruta guardada dibujada con Polyline, distancia, duración, cobro y calificación
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import useLanguage from '../hooks/useLanguage';
 import { getTrip } from '../services/tripService';
-import { VEHICLE_CATEGORIES } from '../constants/opcionesRegistro';
 import { formatDateTime } from '../utils/dateRanges';
-import {
-  formatCOP,
-  formatDistance,
-  formatDuration,
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_STATUS_LABELS,
-} from '../utils/formatters';
+import { formatCOP, formatDistance, formatDuration } from '../utils/formatters';
 import { colors, radius, spacing, typography } from '../theme';
 
 const toLatLng = (point) => ({ latitude: point.lat, longitude: point.lng });
-const findLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
 
 // Fila del detalle: etiqueta a la izquierda y valor a la derecha
 function DetailRow({ label, value, strong = false }) {
@@ -29,6 +21,7 @@ function DetailRow({ label, value, strong = false }) {
 
 export default function TripDetailScreen({ route }) {
   const { tripId } = route.params;
+  const { t } = useLanguage();
   const mapRef = useRef(null);
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +34,7 @@ export default function TripDetailScreen({ route }) {
         if (active) setTrip(data);
       })
       .catch((error) => {
-        if (active) setErrorMessage(`No se pudo cargar el viaje: ${error.message}`);
+        if (active) setErrorMessage(t('tripDetail.loadError', { message: error.message }));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -49,7 +42,7 @@ export default function TripDetailScreen({ route }) {
     return () => {
       active = false;
     };
-  }, [tripId]);
+  }, [tripId, t]);
 
   if (loading) {
     return (
@@ -62,13 +55,14 @@ export default function TripDetailScreen({ route }) {
   if (!trip) {
     return (
       <View style={styles.center}>
-        <Text style={typography.error}>{errorMessage || 'No se encontró el viaje.'}</Text>
+        <Text style={typography.error}>{errorMessage || t('tripDetail.notFound')}</Text>
       </View>
     );
   }
 
   // Ruta guardada al iniciar el viaje; si no existe, línea recta entre origen y destino
-  const routeCoordinates = trip.route?.length > 1 ? trip.route : [toLatLng(trip.origin), toLatLng(trip.destination)];
+  const routeCoordinates =
+    trip.route?.length > 1 ? trip.route : [toLatLng(trip.origin), toLatLng(trip.destination)];
   const rating = trip.rating ?? 0;
   const commissionPercent = Math.round((trip.commissionRate ?? 0.2) * 100);
 
@@ -85,30 +79,36 @@ export default function TripDetailScreen({ route }) {
           })
         }
       >
-        <Marker coordinate={toLatLng(trip.origin)} title="Recogida" pinColor="green" />
-        <Marker coordinate={toLatLng(trip.destination)} title="Destino" pinColor="red" />
+        <Marker coordinate={toLatLng(trip.origin)} title={t('home.pickup')} pinColor="green" />
+        <Marker coordinate={toLatLng(trip.destination)} title={t('home.destination')} pinColor="red" />
         <Polyline coordinates={routeCoordinates} strokeColor={colors.accent} strokeWidth={5} />
       </MapView>
 
       <View style={styles.card}>
-        <DetailRow label="Fecha" value={formatDateTime(trip.completedAt?.toDate?.())} />
-        <DetailRow label="Origen" value={trip.origin.address} />
-        <DetailRow label="Destino" value={trip.destination.address} />
-        <DetailRow label="Categoría" value={findLabel(VEHICLE_CATEGORIES, trip.category)} />
-        <DetailRow label="Distancia" value={formatDistance(trip.distanceKm)} />
-        <DetailRow label="Duración" value={formatDuration(trip.durationMin)} />
-        <DetailRow label="Método de pago" value={PAYMENT_METHOD_LABELS[trip.paymentMethod] ?? trip.paymentMethod} />
-        <DetailRow label="Estado del pago" value={PAYMENT_STATUS_LABELS[trip.paymentStatus] ?? trip.paymentStatus} />
+        <DetailRow label={t('tripDetail.date')} value={formatDateTime(trip.completedAt?.toDate?.())} />
+        <DetailRow label={t('tripDetail.origin')} value={trip.origin.address} />
+        <DetailRow label={t('tripDetail.destination')} value={trip.destination.address} />
+        <DetailRow label={t('tripDetail.category')} value={t(`category.${trip.category}`)} />
+        <DetailRow label={t('tripDetail.distance')} value={formatDistance(trip.distanceKm)} />
+        <DetailRow label={t('tripDetail.duration')} value={formatDuration(trip.durationMin)} />
+        <DetailRow label={t('tripDetail.paymentMethod')} value={t(`payment.method.${trip.paymentMethod}`)} />
+        <DetailRow
+          label={t('tripDetail.paymentStatus')}
+          value={trip.paymentStatus ? t(`payment.status.${trip.paymentStatus}`) : ''}
+        />
       </View>
 
       <View style={styles.card}>
-        <DetailRow label="Tarifa" value={formatCOP(trip.fare)} />
-        <DetailRow label={`Comisión (${commissionPercent} %)`} value={`- ${formatCOP(trip.commission)}`} />
-        <DetailRow label="Propina" value={formatCOP(trip.tip)} />
-        <DetailRow label="Ganancia neta" value={formatCOP(trip.driverEarnings)} strong />
+        <DetailRow label={t('tripDetail.fare')} value={formatCOP(trip.fare)} />
         <DetailRow
-          label="Calificación del pasajero"
-          value={rating > 0 ? `${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}` : 'Sin calificar'}
+          label={t('trip.commission', { percent: commissionPercent })}
+          value={`- ${formatCOP(trip.commission)}`}
+        />
+        <DetailRow label={t('tripDetail.tip')} value={formatCOP(trip.tip)} />
+        <DetailRow label={t('tripDetail.netEarnings')} value={formatCOP(trip.driverEarnings)} strong />
+        <DetailRow
+          label={t('tripDetail.rating')}
+          value={rating > 0 ? `${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}` : t('tripDetail.notRated')}
         />
       </View>
     </ScrollView>

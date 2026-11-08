@@ -1,7 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #32
-// AI-assisted: see docs/AI_LOG.md #40
-// AI-assisted: see docs/AI_LOG.md #42
-
 
 import {
   deleteDoc,
@@ -101,6 +97,11 @@ export const updateDriverLocation = async (phone, { latitude, longitude }) => {
   });
 };
 
+// Guarda el idioma elegido en Configuración (dato editable del perfil del conductor)
+export const updateDriverLanguage = async (phone, language) => {
+  await updateDoc(doc(db, COLLECTION, phone), { language });
+};
+
 // AI-assisted: see docs/AI_LOG.md #23
 // Elimina al conductor y sus viajes, y comprueba que en la base de datos no quede nada.
 // Las imágenes en Cloudinary solo se pueden borrar con la API Secret, que no puede ir en la app;
@@ -114,6 +115,3 @@ export const deleteDriver = async (phone) => {
     throw new Error('El conductor no se eliminó por completo. Intenta de nuevo.');
   }
 };
-
-// Servicio de conductores en Firestore: colección drivers, un documento por celular.
-// Cada documento tiene los datos del conductor, su vehículo, sus documentos y las URL de sus fotos en Cloudinary.
